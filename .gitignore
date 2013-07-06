@@ -1,0 +1,6 @@
+# Use wildcards as well
+*~
+*/*~
+
+# Can also ignore all directories and files in a directory.
+docs

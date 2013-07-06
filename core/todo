@@ -1,0 +1,1 @@
+host1.protocolHandlers.Ethernet.send(host1.netIfaces[0], '1', 0x0800, 'hello world!');

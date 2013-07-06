@@ -1,0 +1,42 @@
+<! DOCTYPE html>
+<html>  
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="core/helpers.js"></script>
+    <script src="core/sprintf-0.7-beta1.js"></script>
+    <script src="core/d3.v3.min.js"></script>
+    <script src="core/environment.js"></script>
+    <script src="core/executor.js"></script>
+    <script src="core/dev_tm.js"></script>
+    <script src="core/physical_port.js"></script>
+    <script src="core/net_interface.js"></script>
+    <script src="core/prot_ethernet.js"></script>
+    <script src="core/prot_arp.js"></script>
+    <script src="core/prot_ipv4.js"></script>
+    <script src="core/prot_udp.js"></script>
+    <script src="core/dev_host.js"></script>
+    <script src="core/dev_router.js"></script>
+    <script src="core/dev_switch.js"></script>
+    <script src="core/constructor.js"></script>
+    <script src="core/visualizer.js"></script>
+    <script src="test/test1.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+    <title>test file</title>
+  </head>
+  <body>    
+    <h1>Header</h1>
+    <p><aside style="margin-top:-43px;">June 30, 2013</aside>
+    
+    <div class="fbox fb_manage">    
+      <input type="button" onClick='Executor.pause()' value="Pause"/>
+      <input type="button" onClick='Executor.play()' value="Play"/>
+      <input type="button" onClick='Executor.stepForward()' value="StepForward"/>
+    </div>
+    <div class="fbox fb_chart"></div>
+    <div class="fbox fb_detail"></div>
+    
+    <script type="text/javascript" language="javascript" charset="utf-8">
+        Visualizer.initialize();
+    </script>
+  </body>
+</html>
