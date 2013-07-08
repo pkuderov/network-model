@@ -14,12 +14,21 @@ var Switch = function(name) {
     this.getObjectName = function() {
         return sprintf("%s%s", this.objectTypeName, this.deviceName);
     }
+    this.getPort = function(i) {
+        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
+        return this.ports[i];
+    }
     this.addPort = function() {
         var port = new PhysicalPort(this, this.ports.length, this);
         this.ports.push(port);
+        return port;
     }
     this.removePort = function(i) {
-        //splice array and change indexes for all ports after the removed
+        assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound"));
+        this.ports.splice(i, 1);
+        for (var j = i; j < this.ports.length; j++) {
+            this.ports[j].setIndex(j);
+        }
     }
     this.receive = function(indexPortFrom, frame) {
         this.macTable.update(this.ports[indexPortFrom], frame.srcMac);
@@ -33,7 +42,6 @@ var Switch = function(name) {
             toSendPorts = this.getAllPortsExcept(indexPortFrom);
             
         for(var i = 0; i < toSendPorts.length; i++) {
-            //TODO check if clone's really need
             toSendPorts[i].send(frame);
         }
     }
@@ -44,9 +52,6 @@ var Switch = function(name) {
                 res.push(this.ports[i]);
         }
         return res;
-    }
-    this.getPort = function(i) {
-        return this.ports[i];
     }
     this.addActiveElementaryObjects = function(activeObjects) {
         this.macTable.addActiveElementaryObjects(activeObjects);

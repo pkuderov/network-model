@@ -20,10 +20,10 @@ var Constructor = new function() {
         selectedLinks: [],
         mouseDownLink: null,
         mouseDownNode: null,
-        mouseUpNode: null
+        mouseUpNode: null,
+        savedZoomValues: {}
     };
-    
-    
+        
     this.clearAll = function() {
         if (this.visBox)
             this.visBox.remove();
@@ -42,10 +42,12 @@ var Constructor = new function() {
                 .attr("width", this.width)
                 .attr("height", this.height)
                 .attr("pointer-events", "all");
-
+        
+        this.zoom = d3.behavior.zoom();
+        
         this.visBox = this.outerSvg
             .append('svg:g')
-                .call(d3.behavior.zoom().on("zoom", this.rescale))
+                .call(this.zoom.on("zoom", this.rescale))
                 .on("dblclick.zoom", null)
             .append('svg:g')
                 .on("mousemove", this.mouseMove)
@@ -71,8 +73,7 @@ var Constructor = new function() {
         this.node = this.visBox.selectAll(".node");
                 
         // add keyboard callback
-        d3.select(window)
-            .on("keydown", this.keyDown);
+        this.enableKeysHandlers();
     }
             
     // rescale g
@@ -80,13 +81,28 @@ var Constructor = new function() {
         Constructor.visBox.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
     }
     
+    this.enableKeysHandlers = function() {
+        d3.select(window)
+            .on("keydown", Constructor.keyDown);
+    }
     this.enableZoom = function() {
+        Constructor.zoom
+            .translate(Constructor.eventVars.savedZoomValues.translate)
+            .scale(Constructor.eventVars.savedZoomValues.scale);
+            
         Constructor.outerSvg.select("g")
-            .call(d3.behavior.zoom().on("zoom", Constructor.rescale))
+            .call(Constructor.zoom.on("zoom", Constructor.rescale))
             .on("dblclick.zoom", null);
+        
+        d3.event.translate = clone(Constructor.zoom.translate());
+        d3.event.scale = Constructor.zoom.scale();
     }
     this.disableZoom = function() {
-        Constructor.outerSvg.select("g").call(d3.behavior.zoom().on("zoom", null));        
+        Constructor.eventVars.savedZoomValues = {
+            translate: clone(Constructor.zoom.translate()),
+            scale: clone(Constructor.zoom.scale())
+        };
+        Constructor.outerSvg.select("g").call(Constructor.zoom.on("zoom", null));
     }
 
     // redraw force layout
@@ -125,13 +141,16 @@ var Constructor = new function() {
         if (d3.event.button == 0) {
             // left button
             if (d3.event.ctrlKey) {
-                // + ctrl
+                // + ctrl : additive select/deselect
                 var selectedNodes = Constructor.eventVars.selectedNodes;
                 var ind = selectedNodes.indexOf(d)
                 if (ind >= 0)
                     selectedNodes.splice(ind, 1);
                 else
                     selectedNodes.push(d);                
+            }
+            else if (d3.event.shiftKey) {
+                // + shift : link this node with every selected node
             }
             else {
                 // + no modifiers
@@ -180,12 +199,7 @@ var Constructor = new function() {
         
         if (d3.event.button == 0 && d3.event.shiftKey) {
             // left button + shft key
-            var point = d3.mouse(this),
-                newHost = new Host(Environment.getNextUniqueMac());
-                
-            Environment.addObject(newHost);
-            Constructor.nodesData.push({x: point[0], y: point[1], obj: newHost});
-    
+            Constructor.newObject.call(this);
             Constructor.redraw();
         }
         
@@ -218,6 +232,37 @@ var Constructor = new function() {
 //            .attr("y", function(d) { return d.y; });
     }
     
+    this.newObject = function() {        
+        var point = d3.mouse(this),
+            newHost = new Host(Environment.getNextUniqueMac());
+            
+        Environment.addObject(newHost);
+        Constructor.nodesData.push({x: point[0], y: point[1], obj: newHost});
+    }
+    this.linkToObject = function(obj) {
+        for (var i = 0; i < Constructor.eventVars.selectedNodes; i++) {
+            var host = Constructor.eventVars.selectedNodes[i];
+            host.addPort(Environment.Environment.getNextUniqueMac());
+            hosts[i].netIfaces[1].addIp(ipStringToInt('192.168.55.' + (i+1).toString()), netmaskShortToFull(24));
+            Environment.addObject(hosts[i]);
+        }
+
+        var tmCount = hostCount + 1;
+        var tms = [];
+        for (var i = 0; i < tmCount; i++) {
+            tms[i] = new TransMedium(1);
+            Environment.addObject(tms[i]);
+        }      
+        var sw = new Switch("0");
+        for (var i = 0; i < hostCount + 2; i++) {
+            sw.addPort();
+        }
+        Environment.addObject(sw);
+
+        for (var i = 0; i < hostCount; i++) {
+            Environment.connectPorts(hosts[i].getPort(0), sw.getPort(i), tms[i]);
+        }
+    }
     
 //    // line displayed when dragging new nodes
 //    var drag_line = vis.append("line")

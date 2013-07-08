@@ -93,8 +93,11 @@ var NetIface = function(owner, lowerObject, mac) {
 	    //delete ip record from addresses
 	    addresses.splice(i, 1);
     }
-    
-    //endregion 
+    this.removeAllIp = function() {
+        this.addresses.forEach(function(pair) {
+            this.removeIp(pair.ip);
+        });
+    }    
 }
 
 var LoopbackNetIface = function(owner) {

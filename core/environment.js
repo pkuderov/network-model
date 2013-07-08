@@ -32,8 +32,10 @@ var Environment = new function() {
     }
     this.removeObject = function(obj) {
         // if TransMedium
-        if (this.objects.tm.indexOf(obj) >= 0)
+        if (obj === TransMedium) {
+            
             obj.disconnectPorts();
+        }
     
         var arr = this.objects[obj.objectTypeName]; 
         for(var i = 0; i < arr.length; i++) {

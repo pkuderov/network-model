@@ -19,24 +19,39 @@ var Router = function(name) {
     this.getObjectName = function() {
         return sprintf("%s%s", this.objectTypeName, this.deviceName);
     }
+    this.getPort = function(i) {
+        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
+        return this.ports[i];
+    }
     this.addPort = function(mac) {
         var netIface = this.addNetIface(undefined, mac);
         var port = new PhysicalPort(this, this.ports.length, netIface);
         this.ports.push(port);
         netIface.setLowerObject(port);
-    }
-    this.addNetIface = function(lowerObject, mac) {
-        this.netIfaces.push(new NetIface(this, lowerObject, mac));
-        return this.netIfaces[this.netIfaces.length - 1];
-    }
-    this.getPort = function(i) {
-        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
-        return this.ports[i];
+        return port;
     }
     this.removePort = function(i) {
-        assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound"));
-        //splice array and change indexes for all ports after the removed
-        logf(this, "removePort isn't handled");
+        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
+//        var netIfaceIndex = this.netIfaces.indexOf(this.ports[i].upperObject);
+//        if (netIfaceIndex >= 0 && netIfaceIndex < this.netIfaces.length)
+//            this.removeNetIface(netIfaceIndex);
+        if (this.ports[i].upperObject)
+            this.removeNetIface(i + 1);
+            
+        this.ports.splice(i, 1);
+        for (var j = i; j < this.ports.length; j++) {
+            this.ports[j].setIndex(j);
+        }
+    }
+    this.addNetIface = function(lowerObject, mac) {
+        var netIface = new NetIface(this, lowerObject, mac);
+        this.netIfaces.push(netIface);
+        return netIface;
+    }
+    this.removeNetIface = function(i) {
+        assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound")); 
+        this.netIfaces[i].removeAllIp();
+        this.netifaces.splice(i, 1);
     }
     this.addActiveElementaryObjects = function(activeObjects) {
         for (var i = 0; i < this.ports.length; i++) {

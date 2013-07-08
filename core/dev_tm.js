@@ -4,6 +4,7 @@
 
 var TransMedium = function(ticksToTransfer) {
     this.objectTypeName = 'tm';
+    this.directions = {};
 
     if (ticksToTransfer == undefined)
         this.ticksToTransfer = 1;

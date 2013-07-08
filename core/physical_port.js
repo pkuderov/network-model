@@ -21,6 +21,9 @@ var PhysicalPort = function(owner, index, upperObject) {
     this.transferRateByOctets = 512;
     
     //methods
+    this.setIndex = function(i) {
+        this.index = i;
+    }
     this.getObjectName = function() {
         return sprintf("%s.%s%d", this.owner.getObjectName(), this.objectTypeName, this.index);
     }
