@@ -1,6 +1,8 @@
 # Use wildcards as well
 *~
 */*~
+*.bak
+*/*.bak
 
 # Can also ignore all directories and files in a directory.
 docs

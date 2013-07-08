@@ -71,6 +71,7 @@ var Constructor = new function() {
             .on("tick", this.tick);
         
         this.node = this.visBox.selectAll(".node");
+        this.link = this.visBox.selectAll(".link");
                 
         // add keyboard callback
         this.enableKeysHandlers();
@@ -108,6 +109,7 @@ var Constructor = new function() {
     // redraw force layout
     this.redraw = function() {
         this.node = this.node.data(this.nodesData);
+        this.link = this.link.data(this.linksData);
 
         this.node.enter().insert("circle")
             .attr("class", "node")
@@ -123,8 +125,19 @@ var Constructor = new function() {
             .ease("elastic")
             .attr("r", this.radius);
             
-        this.node.exit().transition()
+        // add links
+        this.link.enter().insert("line")
+            .attr("class", "link");
+            // event handlers
+            // drag links
+            
+        this.node.exit()
+            .transition()
             .attr("r", 0)
+            .remove();
+            
+        // remove linka
+        this.link.exit()
             .remove();
             
         this.node.classed("node_selected", function(d) { return Constructor.eventVars.selectedNodes.indexOf(d) >= 0; });
@@ -151,6 +164,7 @@ var Constructor = new function() {
             }
             else if (d3.event.shiftKey) {
                 // + shift : link this node with every selected node
+                Constructor.linkToNode(d);
             }
             else {
                 // + no modifiers
@@ -218,10 +232,11 @@ var Constructor = new function() {
     }
 
     this.tick = function() {
-//        this.link.attr("x1", function(d) { return d.source.x; })
-//            .attr("y1", function(d) { return d.source.y; })
-//            .attr("x2", function(d) { return d.target.x; })
-//            .attr("y2", function(d) { return d.target.y; });
+        Constructor.link
+            .attr("x1", function(d) { return d.node1.x; })
+            .attr("y1", function(d) { return d.node1.y; })
+            .attr("x2", function(d) { return d.node2.x; })
+            .attr("y2", function(d) { return d.node2.y; });
 
         Constructor.node
             .attr("cx", function(d) { return d.x; })
@@ -239,29 +254,15 @@ var Constructor = new function() {
         Environment.addObject(newHost);
         Constructor.nodesData.push({x: point[0], y: point[1], obj: newHost});
     }
-    this.linkToObject = function(obj) {
-        for (var i = 0; i < Constructor.eventVars.selectedNodes; i++) {
-            var host = Constructor.eventVars.selectedNodes[i];
-            host.addPort(Environment.Environment.getNextUniqueMac());
-            hosts[i].netIfaces[1].addIp(ipStringToInt('192.168.55.' + (i+1).toString()), netmaskShortToFull(24));
-            Environment.addObject(hosts[i]);
-        }
-
-        var tmCount = hostCount + 1;
-        var tms = [];
-        for (var i = 0; i < tmCount; i++) {
-            tms[i] = new TransMedium(1);
-            Environment.addObject(tms[i]);
-        }      
-        var sw = new Switch("0");
-        for (var i = 0; i < hostCount + 2; i++) {
-            sw.addPort();
-        }
-        Environment.addObject(sw);
-
-        for (var i = 0; i < hostCount; i++) {
-            Environment.connectPorts(hosts[i].getPort(0), sw.getPort(i), tms[i]);
-        }
+    this.linkToNode = function(node) {
+        Constructor.eventVars.selectedNodes.forEach(function(d) {
+            var port1 = d.obj.addPort(Environment.Environment.getNextUniqueMac());
+            var port2 = node.obj.addPort(Environment.Environment.getNextUniqueMac());
+            var tm = Environment.addObject(new TransMedium());
+            Environment.connectPorts(port1, port2, tm);
+            
+            Constructor.linksData.push({node1: d, node2: node});
+        });
     }
     
 //    // line displayed when dragging new nodes

@@ -29,21 +29,42 @@ var Environment = new function() {
     this.addObject = function(obj) {
         this.objects[obj.objectTypeName].push(obj);
         this.isChanged = true;
+        return obj;
     }
     this.removeObject = function(obj) {
-        // if TransMedium
-        if (obj === TransMedium) {
-            
-            obj.disconnectPorts();
+        if (obj.objectTypeName == 'tm') {
+            this.removeTransMedium(obj, true);
         }
-    
+        else {
+            this.removeHostOrSwitch(obj);
+        }
+    }
+    this.removeHostOrSwitch = function(obj) {
+        obj.ports.forEach(function(port) {
+            if (port.toSendTMDirection) {
+                //connected
+                this.removeTransMedium(port.toSendTMDirection.owner);
+            }
+        });
+        this.removeObjectFromEnvironment(obj);
+    }
+    this.removeTransMedium = function(tm, withPortsRemoval) {        
+        var port1 = tm.directions.toPort1.toPort;
+        var port2 = tm.directions.toPort1.fromPort;
+        port1.owner.removePort(port1.index);
+        port2.owner.removePort(port2.index);
+        tm.disconnectPorts();
+        
+        this.removeObjectFromEnvironment(tm);
+    }
+    this.removeObjectFromEnvironment = function(obj) {
         var arr = this.objects[obj.objectTypeName]; 
         for(var i = 0; i < arr.length; i++) {
             if (arr[i] == obj) {
                 arr.splice(i, 1);
-                
                 this.isChanged = true;
-                return;
+                
+                break;
             }
         }
     }
