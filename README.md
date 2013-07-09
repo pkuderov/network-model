@@ -1,4 +1,4 @@
 network-model
 =============
 
-This project emulate tcp\ip network and visualize it
+This project emulates tcp\ip network and visualizes it
