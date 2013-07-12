@@ -27,7 +27,11 @@
     <h1>Header</h1>
     <p><aside style="margin-top:-43px;">June 30, 2013</aside>
     
-    <div class="fbox fb_manage">    
+    <div class="fbox fb_manage"> 
+      <input type="button" onClick="Constructor.setNewNodeType('host')" value="Host"/>
+      <input type="button" onClick="Constructor.setNewNodeType('router')" value="Router"/>
+      <input type="button" onClick="Constructor.setNewNodeType('switch')" value="Switch"/>
+
       <input type="button" onClick='Executor.pause()' value="Pause"/>
       <input type="button" onClick='Executor.play()' value="Play"/>
       <input type="button" onClick='Executor.stepForward()' value="StepForward"/>

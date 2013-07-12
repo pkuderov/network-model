@@ -53,12 +53,6 @@ aside {
   float: right;
 }
 
-.fb_chart circle.little {
-  fill: #aaa;
-  stroke: #666;
-  stroke-width: 1.5px;
-}
-
 .fbox button {
   left: 275px;
   position: absolute;
@@ -79,12 +73,19 @@ aside {
 
 .link {
   stroke: #999;
-  stroke-width: 5;
+  stroke-width: 3;
   cursor: crosshair;
 }
 
 .link_selected {
   stroke: #ff7f0e;
+}
+
+.rect_selection {
+    stroke: #999;
+    stroke-width: 2;
+    stroke-dasharray: 2 2;
+    fill: none
 }
 
 /*

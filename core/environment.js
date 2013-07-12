@@ -10,6 +10,7 @@ var Environment = new function() {
     this.activeObjects = [];
 
     this.nextUniqueMac = 1;
+    this.nextUniqueSwitch = 1;
     
     //methods
     this.getActiveElementaryObjects = function() {
@@ -74,6 +75,9 @@ var Environment = new function() {
     }
     this.getNextUniqueMac = function() {
         return macIntToString(this.nextUniqueMac++);
+    }
+    this.getNextUniqueSwitchNumber = function() {
+        return this.nextUniqueSwitch++;
     }
     this.createSubnet = function(firstIpStr, netmaskShort, hostsCount, router) {
         //star - 'hostsCount' hosts linked through switch with name 'subnetIndex' to each other and router

@@ -20,8 +20,9 @@ var Constructor = new function() {
         selectedLinks: [],
         mouseDownLink: null,
         mouseDownNode: null,
-        mouseUpNode: null,
-        savedZoomValues: {}
+        selectionRectangleCoordinates: null,
+        savedZoomValues: {},
+        currentNewNodeType: 'host'
     };
         
     this.clearAll = function() {
@@ -37,28 +38,30 @@ var Constructor = new function() {
         this.clearAll();
         
         // init svg
-        this.outerSvg = d3.select(".fb_chart")
-            .append("svg:svg")
-                .attr("width", this.width)
-                .attr("height", this.height)
-                .attr("pointer-events", "all");
+        this.outerSvg = d3.select('.fb_chart')
+            .append('svg:svg')
+                .attr('width', this.width)
+                .attr('height', this.height)
+                .attr('pointer-events', 'all');
         
         this.zoom = d3.behavior.zoom();
         
+        d3.select(window)
+            .on('mouseup', this.mouseUp);
+            
         this.visBox = this.outerSvg
-            .append('svg:g')
-                .call(this.zoom.on("zoom", this.rescale))
-                .on("dblclick.zoom", null)
-            .append('svg:g')
-                .on("mousemove", this.mouseMove)
-                .on("mousedown", this.mouseDown)
-                .on("mouseup", this.mouseUp)
-                .on("contextmenu", this.contextMenu);
+            .append('g')
+                .call(this.zoom.on('zoom', this.rescale))
+                .on('dblclick.zoom', null)
+            .append('g')
+                .on('mousedown', this.mouseDown)
+                .on('contextmenu', this.contextMenu);
                         
         this.visBox
-            .append('svg:rect')
-                .attr('width', this.width)
-                .attr('height', this.height)
+            .append('rect')
+                .attr('width', this.width * 2)
+                .attr('height', this.height * 2)
+                .attr('transform', 'translate(' + [-this.width/2, -this.height/2] + ')')
                 .attr('fill', 'white');
                 
         
@@ -66,34 +69,40 @@ var Constructor = new function() {
         this.forceLayout = d3.layout.force()
             .size([this.width, this.height])
             .nodes(this.nodesData)
+            .links(this.linksData)
             .linkDistance(this.linkDistance)
             .charge(this.charge)
-            .on("tick", this.tick);
+            .on('tick', this.tick);
         
-        this.node = this.visBox.selectAll(".node");
-        this.link = this.visBox.selectAll(".link");
+        this.node = this.visBox.selectAll('.node');
+        this.link = this.visBox.selectAll('.link');
                 
         // add keyboard callback
-        this.enableKeysHandlers();
+        this.enableKeyUpDownHandler();
     }
             
     // rescale g
     this.rescale = function() {
-        Constructor.visBox.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+        Constructor.visBox.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')');
     }
     
-    this.enableKeysHandlers = function() {
+    this.setMouseDragHandler = function(handler) {
+        Constructor.visBox
+            .on('mousemove', handler);
+    }
+    this.enableKeyUpDownHandler = function() {
         d3.select(window)
-            .on("keydown", Constructor.keyDown);
+            .on('keydown', Constructor.keyDown)
+            .on('keyup', Constructor.keyUp);
     }
     this.enableZoom = function() {
         Constructor.zoom
             .translate(Constructor.eventVars.savedZoomValues.translate)
             .scale(Constructor.eventVars.savedZoomValues.scale);
             
-        Constructor.outerSvg.select("g")
-            .call(Constructor.zoom.on("zoom", Constructor.rescale))
-            .on("dblclick.zoom", null);
+        Constructor.outerSvg.select('g')
+            .call(Constructor.zoom.on('zoom', Constructor.rescale))
+            .on('dblclick.zoom', null);
         
         d3.event.translate = clone(Constructor.zoom.translate());
         d3.event.scale = Constructor.zoom.scale();
@@ -103,44 +112,47 @@ var Constructor = new function() {
             translate: clone(Constructor.zoom.translate()),
             scale: clone(Constructor.zoom.scale())
         };
-        Constructor.outerSvg.select("g").call(Constructor.zoom.on("zoom", null));
+        Constructor.outerSvg.select('g').call(Constructor.zoom.on('zoom', null));
     }
 
     // redraw force layout
     this.redraw = function() {
-        this.node = this.node.data(this.nodesData);
-        this.link = this.link.data(this.linksData);
-
-        this.node.enter().insert("circle")
-            .attr("class", "node")
-            .on("mousedown", this.mouseDownOnNode)
-            .on("mouseup", this.mouseUpOnNode)
-            .on("mouseenter", this.mouseEnterNode)
-            .on("mouseleave", this.mouseLeaveNode)
-            .call(d3.behavior.drag().on("drag", this.dragNode))
-            .call(Constructor.forceLayout.drag)
-            .attr("r", this.radius / 2)
-            .transition()
-            .duration(750)
-            .ease("elastic")
-            .attr("r", this.radius);
+        // links
+        this.link = this.link.data(this.linksData);            
             
         // add links
-        this.link.enter().insert("line")
-            .attr("class", "link");
+        this.link.enter().insert('line', '.node')
+            .attr('class', 'link');
             // event handlers
             // drag links
             
-        this.node.exit()
-            .transition()
-            .attr("r", 0)
-            .remove();
-            
-        // remove linka
+        // remove links
         this.link.exit()
             .remove();
             
-        this.node.classed("node_selected", function(d) { return Constructor.eventVars.selectedNodes.indexOf(d) >= 0; });
+        this.link.classed('link_selected', function(d) { return Constructor.eventVars.selectedLinks.indexOf(d) >= 0; });
+            
+        // nodes
+        this.node = this.node.data(this.nodesData);
+        this.node.enter().insert('circle')
+            .attr('class', 'node')
+            .on('mousedown', this.mouseDownOnNode)
+            .on('mouseenter', this.mouseEnterNode)
+            .on('mouseleave', this.mouseLeaveNode)
+            .call(d3.behavior.drag().on('drag', this.dragNode))
+            .call(Constructor.forceLayout.drag)
+            .attr('r', this.radius / 2)
+            .transition()
+            .duration(750)
+            .ease('elastic')
+            .attr('r', this.radius);
+            
+        this.node.exit()
+            .transition()
+            .attr('r', 0)
+            .remove();
+                        
+        this.node.classed('node_selected', function(d) { return Constructor.eventVars.selectedNodes.indexOf(d) >= 0; });
         
         if (d3.event) {
             // prevent browser's default behavior
@@ -160,124 +172,220 @@ var Constructor = new function() {
                 if (ind >= 0)
                     selectedNodes.splice(ind, 1);
                 else
-                    selectedNodes.push(d);                
+                    selectedNodes.push(d);         
             }
             else if (d3.event.shiftKey) {
                 // + shift : link this node with every selected node
                 Constructor.linkToNode(d);
+
+                Constructor.resetSelection();
+                Constructor.eventVars.selectedNodes = [d];
             }
             else {
                 // + no modifiers
+                Constructor.resetSelection();
                 Constructor.eventVars.selectedNodes = [d];
             }
-            Constructor.eventVars.mouseDownNode = d;
             
+            Constructor.eventVars.mouseDownNode = d;            
             Constructor.redraw();
         }
     }
-    this.mouseUpOnNode = function(d) {
-        //Constructor.redraw();
-    }
-    this.mouseEnterNode = function() {
-        d3.select(this)
-            .attr("r", Constructor.radius * 1.3);
-    }
-    this.mouseLeaveNode = function() {
-        d3.select(this)
-            .attr("r", Constructor.radius);
-    }
-
     this.mouseDown = function() {
-        if (Constructor.eventVars.mouseDownNode) {
-            Constructor.disableZoom();
+        if (d3.event.button == 0) {
+            // left button
+            if (d3.event.shiftKey) {
+                // + shift: add node
+                if (!Constructor.eventVars.mouseDownNode) {
+                    var newNode = Constructor.addObject.call(this);
+                    Constructor.linkToNode(newNode);
+                    Constructor.resetSelection();
+                }
+            }
+            else if (d3.event.ctrlKey) {
+                if (!Constructor.eventVars.mouseDownNode) {
+                    var point = d3.mouse(this);
+                    Constructor.visBox
+                        .append('rect')
+                            .attr('class', 'rect_selection')
+                            .attr('x', point[0])
+                            .attr('y', point[1]);
+                            
+                    Constructor.eventVars.selectionRectangleCoordinates = clone(point);
+                    Constructor.setMouseDragHandler(Constructor.mouseDrag);
+                }
+            }
+            else {            
+                if (!Constructor.eventVars.mouseDownNode && Constructor.eventVars.selectedNodes.length > 0) {
+                    Constructor.resetSelection();
+                }
+            }
         }
-        else {
-            if (Constructor.eventVars.selectedNodes.length > 0)
-                Constructor.eventVars.selectedNodes = [];
-            Constructor.redraw();
+        
+        if (Constructor.eventVars.mouseDownNode || d3.event.ctrlKey) {
+            Constructor.disableZoom();
         }
         
         if (d3.event.button == 2) {
+            // context menu
             Constructor.disableZoom();
         }
+        
+        Constructor.redraw();
     }
-    this.contextMenu = function() {
-        Constructor.enableZoom();
+    this.mouseDrag = function() {
+        var point = d3.mouse(this);
+        Constructor.visBox.select('.rect_selection')
+            .attr('x', Math.min(point[0], Constructor.eventVars.selectionRectangleCoordinates[0]))
+            .attr('y', Math.min(point[1], Constructor.eventVars.selectionRectangleCoordinates[1]))
+            .attr('width',  Math.abs(point[0] - Constructor.eventVars.selectionRectangleCoordinates[0]))
+            .attr('height',  Math.abs(point[1] - Constructor.eventVars.selectionRectangleCoordinates[1]));
     }
-
-    this.mouseUp = function() {
+    this.mouseUp = function() {        
         if (Constructor.eventVars.mouseDownNode) {
             Constructor.eventVars.mouseDownNode = null;
             Constructor.enableZoom();
         }
-        
-        if (d3.event.button == 0 && d3.event.shiftKey) {
-            // left button + shft key
-            Constructor.newObject.call(this);
-            Constructor.redraw();
-        }
-        
-        if (d3.event.button == 2) {
-            log("right button");
+        else {
+            if (Constructor.eventVars.selectionRectangleCoordinates) {
+                Constructor.selectAreaOfNodes();
+                Constructor.removeSelectionRectangle();
+                Constructor.eventVars.selectionRectangleCoordinates = null;
+                Constructor.enableZoom();
+                Constructor.redraw();
+            }
         }
     }
-    
+    this.mouseEnterNode = function() {
+        d3.select(this)
+            .attr('r', Constructor.radius * 1.3);
+    }
+    this.mouseLeaveNode = function() {
+        d3.select(this)
+            .attr('r', Constructor.radius);
+    }
+    this.contextMenu = function() {
+        Constructor.enableZoom();
+    }
+    this.setNewNodeType = function(newNodeType) {
+        Constructor.eventVars.currentNewNodeType = newNodeType;
+    }
+
     this.dragNode = function(d) {
         d.x = d3.event.x;
         d.y = d3.event.y;
         
         d3.select(this)
-            .attr("cx", d.x)
-            .attr("cy", d.y);
+            .attr('cx', d.x)
+            .attr('cy', d.y);
+    }
+    
+    this.keyUp = function() {
+//        log("%d", d3.event.keyCode);
+        switch (d3.event.keyCode) {
+            case 17: { // ctrl
+                Constructor.removeSelectionRectangle();
+                break;
+            }
+        }
+    }
+    this.keyDown = function() {
+//        log("%d", d3.event.keyCode);
     }
 
     this.tick = function() {
         Constructor.link
-            .attr("x1", function(d) { return d.node1.x; })
-            .attr("y1", function(d) { return d.node1.y; })
-            .attr("x2", function(d) { return d.node2.x; })
-            .attr("y2", function(d) { return d.node2.y; });
+            .attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
 
         Constructor.node
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; });
-            
-//        Constructor.node.select("text")
-//            .attr("x", function(d) { return d.x; })
-//            .attr("y", function(d) { return d.y; });
+            .attr('cx', function(d) { return d.x; })
+            .attr('cy', function(d) { return d.y; });
     }
-    
-    this.newObject = function() {        
-        var point = d3.mouse(this),
-            newHost = new Host(Environment.getNextUniqueMac());
+    this.selectAreaOfNodes = function() {
+        var svgRect = Constructor.visBox.select('.rect_selection'),
+            rect = { 
+                x1: +svgRect.attr('x'), x2 : (+svgRect.attr('x') + (+svgRect.attr('width'))),
+                y1: +svgRect.attr('y'), y2 : (+svgRect.attr('y') + (+svgRect.attr('height')))
+            };
             
-        Environment.addObject(newHost);
-        Constructor.nodesData.push({x: point[0], y: point[1], obj: newHost});
+        
+        Constructor.eventVars.selectedNodes = Constructor.nodesData
+            .filter(function(d) { 
+                return d.x >= rect.x1 && d.x <= rect.x2 && d.y >= rect.y1 && d.y <= rect.y2; 
+            });
+    }
+    this.createSelectionRectangle = function(point) {
+        Constructor.visBox
+            .append('rect')
+                .attr('class', 'rect_selection')
+                .attr('x', point[0])
+                .attr('y', point[1]);
+                
+        Constructor.eventVars.selectionRectangleCoordinates = clone(point);
+        Constructor.setMouseDragHandler(Constructor.mouseDrag);
+    }
+    this.removeSelectionRectangle = function() {
+        if (Constructor.eventVars.selectionRectangleCoordinates) {        
+            Constructor.setMouseDragHandler(null);
+            Constructor.visBox.selectAll('.rect_selection')
+                .remove();
+        }
+    }
+    this.resetSelection = function() {
+        Constructor.eventVars.selectedNodes = [];
+        Constructor.eventVars.selectedLinks = [];        
+    }
+    this.addObject = function() {
+        var newObject;
+        switch (Constructor.eventVars.currentNewNodeType) {
+            case 'host':
+                newObject = new Host(Environment.getNextUniqueMac());
+                break;
+            case 'router':
+                newObject = new Router(Environment.getNextUniqueMac());
+                break;
+            case 'switch':
+                newObject = new Switch(Environment.getNextUniqueSwitchNumber());
+                break;
+            default:
+                log("unknown 'new node type'");
+                break;
+        }
+        
+        var point = d3.mouse(this),
+            newNode = {x: point[0], y: point[1], obj: newObject};
+            
+        Environment.addObject(newObject);
+        Constructor.nodesData.push(newNode);
+        return newNode;
     }
     this.linkToNode = function(node) {
         Constructor.eventVars.selectedNodes.forEach(function(d) {
-            var port1 = d.obj.addPort(Environment.Environment.getNextUniqueMac());
-            var port2 = node.obj.addPort(Environment.Environment.getNextUniqueMac());
+            var port1 = d.obj.addPort(Environment.getNextUniqueMac());
+            var port2 = node.obj.addPort(Environment.getNextUniqueMac());
             var tm = Environment.addObject(new TransMedium());
             Environment.connectPorts(port1, port2, tm);
             
-            Constructor.linksData.push({node1: d, node2: node});
+            Constructor.linksData.push({source: d, target: node});
         });
     }
     
 //    // line displayed when dragging new nodes
-//    var drag_line = vis.append("line")
-//        .attr("class", "drag_line")
-//        .attr("x1", 0)
-//        .attr("y1", 0)
-//        .attr("x2", 0)
-//        .attr("y2", 0);
+//    var drag_line = vis.append('line')
+//        .attr('class', 'drag_line')
+//        .attr('x1', 0)
+//        .attr('y1', 0)
+//        .attr('x2', 0)
+//        .attr('y2', 0);
 
 //    // get layout properties
 //    var nodes = force.nodes(),
 //        links = force.links(),
-//        node = vis.selectAll(".node"),
-//        link = vis.selectAll(".link");
+//        node = vis.selectAll('.node'),
+//        link = vis.selectAll('.link');
 
 //    redraw();
 
@@ -289,10 +397,10 @@ var Constructor = new function() {
 
 //      // update drag line
 //      drag_line
-//          .attr("x1", mousedown_node.x)
-//          .attr("y1", mousedown_node.y)
-//          .attr("x2", d3.svg.mouse(this)[0])
-//          .attr("y2", d3.svg.mouse(this)[1]);
+//          .attr('x1', mousedown_node.x)
+//          .attr('y1', mousedown_node.y)
+//          .attr('x2', d3.svg.mouse(this)[0])
+//          .attr('y2', d3.svg.mouse(this)[1]);
 
 //    }
 
@@ -300,7 +408,7 @@ var Constructor = new function() {
 //      if (mousedown_node) {
 //        // hide drag line
 //        drag_line
-//          .attr("class", "drag_line_hidden")
+//          .attr('class', 'drag_line_hidden')
 
 //        if (!mouseup_node) {
 //          // add node
@@ -333,9 +441,9 @@ var Constructor = new function() {
 
 //      link = link.data(links);
 
-//      link.enter().insert("line", ".node")
-//          .attr("class", "link")
-//          .on("mousedown", 
+//      link.enter().insert('line', '.node')
+//          .attr('class', 'link')
+//          .on('mousedown', 
 //            function(d) { 
 //              mousedown_link = d; 
 //              if (mousedown_link == selected_link) selected_link = null;
@@ -347,17 +455,17 @@ var Constructor = new function() {
 //      link.exit().remove();
 
 //      link
-//        .classed("link_selected", function(d) { return d === selected_link; });
+//        .classed('link_selected', function(d) { return d === selected_link; });
 
 //      node = node.data(nodes);
 
-//      node.enter().insert("circle")
-//          .attr("class", "node")
-//          .attr("r", 5)
-//          .on("mousedown", 
+//      node.enter().insert('circle')
+//          .attr('class', 'node')
+//          .attr('r', 5)
+//          .on('mousedown', 
 //            function(d) { 
 //              // disable zoom
-//              vis.call(d3.behavior.zoom().on("zoom"), null);
+//              vis.call(d3.behavior.zoom().on('zoom'), null);
 
 //              mousedown_node = d;
 //              if (mousedown_node == selected_node) selected_node = null;
@@ -366,19 +474,19 @@ var Constructor = new function() {
 
 //              // reposition drag line
 //              drag_line
-//                  .attr("class", "link")
-//                  .attr("x1", mousedown_node.x)
-//                  .attr("y1", mousedown_node.y)
-//                  .attr("x2", mousedown_node.x)
-//                  .attr("y2", mousedown_node.y);
+//                  .attr('class', 'link')
+//                  .attr('x1', mousedown_node.x)
+//                  .attr('y1', mousedown_node.y)
+//                  .attr('x2', mousedown_node.x)
+//                  .attr('y2', mousedown_node.y);
 
 //              redraw(); 
 //            })
-//          .on("mousedrag",
+//          .on('mousedrag',
 //            function(d) {
 //              // redraw();
 //            })
-//          .on("mouseup", 
+//          .on('mouseup', 
 //            function(d) { 
 //              if (mousedown_node) {
 //                mouseup_node = d; 
@@ -393,21 +501,21 @@ var Constructor = new function() {
 //                selected_node = null;
 
 //                // enable zoom
-//                vis.call(d3.behavior.zoom().on("zoom"), rescale);
+//                vis.call(d3.behavior.zoom().on('zoom'), rescale);
 //                redraw();
 //              } 
 //            })
 //        .transition()
 //          .duration(750)
-//          .ease("elastic")
-//          .attr("r", 6.5);
+//          .ease('elastic')
+//          .attr('r', 6.5);
 
 //      node.exit().transition()
-//          .attr("r", 0)
+//          .attr('r', 0)
 //        .remove();
 
 //      node
-//        .classed("node_selected", function(d) { return d === selected_node; });
+//        .classed('node_selected', function(d) { return d === selected_node; });
 
 //      
 
