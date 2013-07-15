@@ -2,9 +2,9 @@
 <html>  
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="libs/sprintf-0.7-beta1.js"></script>
+    <script src="libs/d3.v3.min.js"></script>
     <script src="core/helpers.js"></script>
-    <script src="core/sprintf-0.7-beta1.js"></script>
-    <script src="core/d3.v3.min.js"></script>
     <script src="core/environment.js"></script>
     <script src="core/executor.js"></script>
     <script src="core/dev_tm.js"></script>
@@ -17,8 +17,8 @@
     <script src="core/dev_host.js"></script>
     <script src="core/dev_router.js"></script>
     <script src="core/dev_switch.js"></script>
-    <script src="core/constructor.js"></script>
-    <script src="core/visualizer.js"></script>
+    <script src="vis/editor.js"></script>
+    <script src="vis/visualizer.js"></script>
     <script src="test/test1.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
     <title>test file</title>
@@ -28,9 +28,9 @@
     <p><aside style="margin-top:-43px;">June 30, 2013</aside>
     
     <div class="fbox fb_manage"> 
-      <input type="button" onClick="Constructor.setNewNodeType('host')" value="Host"/>
-      <input type="button" onClick="Constructor.setNewNodeType('router')" value="Router"/>
-      <input type="button" onClick="Constructor.setNewNodeType('switch')" value="Switch"/>
+      <input type="button" onClick="Editor.setNewNodeType('host')" value="Host"/>
+      <input type="button" onClick="Editor.setNewNodeType('router')" value="Router"/>
+      <input type="button" onClick="Editor.setNewNodeType('switch')" value="Switch"/>
 
       <input type="button" onClick='Executor.pause()' value="Pause"/>
       <input type="button" onClick='Executor.play()' value="Play"/>

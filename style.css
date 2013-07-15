@@ -36,17 +36,17 @@ aside {
   position: relative;
 }
 
-.fb_manage {
+.fbManage {
   padding: 10px;
 }
 
-.fb_chart {
+.fbChart {
   height: 720px;
   width: 720px;
   float: left;
 }
 
-.fb_detail {
+.fbDetail {
   width: 238px;
   height: 720px;
   margin-left: -2px;
@@ -61,14 +61,21 @@ aside {
 }
 
 .node {
-  fill: #eee;
-  stroke: #666;
+  stroke: #333;
   stroke-width: 1.5px;
   cursor: crosshair;
 }
 
-.node_selected {
-  stroke: #ff7f0e;
+.host {
+  fill: #eee;
+}
+
+.router {
+  fill: #4d4d4d;
+}
+
+.switch {
+  fill: #ccf2ff;
 }
 
 .link {
@@ -77,11 +84,11 @@ aside {
   cursor: crosshair;
 }
 
-.link_selected {
+.selected {
   stroke: #ff7f0e;
 }
 
-.rect_selection {
+.rectSelection {
     stroke: #999;
     stroke-width: 2;
     stroke-dasharray: 2 2;
