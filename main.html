@@ -17,7 +17,7 @@
     <script src="core/dev_host.js"></script>
     <script src="core/dev_router.js"></script>
     <script src="core/dev_switch.js"></script>
-    <script src="vis/editor.js"></script>
+    <script src="vis/net_topology_editor.js"></script>
     <script src="vis/visualizer.js"></script>
     <script src="test/test1.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
@@ -27,17 +27,9 @@
     <h1>Header</h1>
     <p><aside style="margin-top:-43px;">June 30, 2013</aside>
     
-    <div class="fbox fb_manage"> 
-      <input type="button" onClick="Editor.setNewNodeType('host')" value="Host"/>
-      <input type="button" onClick="Editor.setNewNodeType('router')" value="Router"/>
-      <input type="button" onClick="Editor.setNewNodeType('switch')" value="Switch"/>
-
-      <input type="button" onClick='Executor.pause()' value="Pause"/>
-      <input type="button" onClick='Executor.play()' value="Play"/>
-      <input type="button" onClick='Executor.stepForward()' value="StepForward"/>
-    </div>
-    <div class="fbox fb_chart"></div>
-    <div class="fbox fb_detail"></div>
+    <div class="fbox fbManage"></div>
+    <div class="fbox fbChart"></div>
+    <div class="fbox fbDetail"></div>
     
     <script type="text/javascript" language="javascript" charset="utf-8">
         Visualizer.initialize();

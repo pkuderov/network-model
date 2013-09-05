@@ -51,7 +51,7 @@ var Router = function(name) {
     this.removeNetIface = function(i) {
         assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound")); 
         this.netIfaces[i].removeAllIp();
-        this.netifaces.splice(i, 1);
+        this.netIfaces.splice(i, 1);
     }
     this.addActiveElementaryObjects = function(activeObjects) {
         for (var i = 0; i < this.ports.length; i++) {

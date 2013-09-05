@@ -62,17 +62,19 @@ var TransMediumDirection = function(owner, fromPort, toPort) {
     this.randomDropFrame = function() {
         if (Math.random() < 0.01) {
             logf(this, "frame damaged during transfer: %s", this.frame.toString());
-            this.resetOptions();
             return true;
         }
     }
     this.doElementaryAction = function() {
         if (this.busy) {
-            if (this.randomDropFrame())
+            if (this.randomDropFrame()) {
+                this.resetOptions();
                 return true;
+            }
             
             if (this.isDelivered()) {
                 this.send();
+                this.resetOptions();
                 return true;
             }
         }
@@ -87,8 +89,9 @@ var TransMediumDirection = function(owner, fromPort, toPort) {
         logf(this, "received frame");
     }
     this.send = function() {
-        this.toPort.receive(this.frame);
-        this.resetOptions();    
+        if (this.toPort) {
+            this.toPort.receive(this.frame);
+        }
     }
     this.getFrameDeliveryPercent = function() {
         if (this.busy) {

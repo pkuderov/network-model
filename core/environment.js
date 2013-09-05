@@ -27,6 +27,26 @@ var Environment = new function() {
         this.isChanged = false;
         return this.activeObjects;
     }
+    this.createObject = function(objectTypeName) {        
+        var newObject;
+        switch (newNodeType) {
+            case 'host':
+                newObject = new Host(this.getNextUniqueMac());
+                break;
+            case 'router':
+                newObject = new Router(this.getNextUniqueMac());
+                break;
+            case 'switch':
+                newObject = new Switch(this.getNextUniqueSwitchNumber());
+                break;
+            case 'link':
+                newObject = new TransMedium();
+            default:
+                log("unknown new node type: %s", newNodeType);
+                break;
+        }
+        return newObject
+    }
     this.addObject = function(obj) {
         this.objects[obj.objectTypeName].push(obj);
         this.isChanged = true;
@@ -34,7 +54,7 @@ var Environment = new function() {
     }
     this.removeObject = function(obj) {
         if (obj.objectTypeName == 'tm') {
-            this.removeTransMedium(obj, true);
+            this.removeTransMedium(obj);
         }
         else {
             this.removeHostOrSwitch(obj);
@@ -44,12 +64,12 @@ var Environment = new function() {
         obj.ports.forEach(function(port) {
             if (port.toSendTMDirection) {
                 //connected
-                this.removeTransMedium(port.toSendTMDirection.owner);
+                Environment.removeTransMedium(port.toSendTMDirection.owner);
             }
         });
         this.removeObjectFromEnvironment(obj);
     }
-    this.removeTransMedium = function(tm, withPortsRemoval) {        
+    this.removeTransMedium = function(tm) {        
         var port1 = tm.directions.toPort1.toPort;
         var port2 = tm.directions.toPort1.fromPort;
         port1.owner.removePort(port1.index);
@@ -59,14 +79,11 @@ var Environment = new function() {
         this.removeObjectFromEnvironment(tm);
     }
     this.removeObjectFromEnvironment = function(obj) {
-        var arr = this.objects[obj.objectTypeName]; 
-        for(var i = 0; i < arr.length; i++) {
-            if (arr[i] == obj) {
-                arr.splice(i, 1);
-                this.isChanged = true;
-                
-                break;
-            }
+        var arr = this.objects[obj.objectTypeName];
+        var i = arr.indexOf(obj);
+        if (i >= 0) {
+            arr.splice(i, 1);
+            this.isChanged = true;
         }
     }
     this.connectPorts = function(portX, portY, transMedium) {            
@@ -80,6 +97,8 @@ var Environment = new function() {
         return this.nextUniqueSwitch++;
     }
     this.createSubnet = function(firstIpStr, netmaskShort, hostsCount, router) {
+        //obsolete method!!! don't use it
+        
         //star - 'hostsCount' hosts linked through switch with name 'subnetIndex' to each other and router
         //default gateway to outer subnets for each host is router
         

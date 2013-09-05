@@ -53,11 +53,8 @@ aside {
   float: right;
 }
 
-.fbox button {
-  left: 275px;
-  position: absolute;
-  top: 145px;
-  width: 80px;
+#btnEditMode {
+  float: right;
 }
 
 .node {
@@ -75,12 +72,11 @@ aside {
 }
 
 .switch {
-  fill: #ccf2ff;
+  fill: #ccf2aa;
 }
 
 .link {
   stroke: #999;
-  stroke-width: 3;
   cursor: crosshair;
 }
 

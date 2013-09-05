@@ -13,7 +13,7 @@ var PhysicalPort = function(owner, index, upperObject) {
     this.index = index;
     //upperObject: netIface | switch
     this.upperObject = upperObject;
-    this.setTMDirectionToSend;
+//remove    this.setTMDirectionToSend;
     this.toSendTMDirection;
     
     this.toSendQueueSize = 128;

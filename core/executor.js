@@ -1,35 +1,35 @@
 var Executor = new function() {
     this.pauseBetweenTicksInMs = 20;
     
-    //hack to make virtualTick == 0 when initialization (at prepareNextTickExectuion())
+    //hack to make currentTick == 0 when initialization (at prepareNextTickExectuion())
     this.currentTick = -1;
      
-    this.tickExecutionState = {indexToCall: 0};
+    this.indexToCall = 0;
     this.timerId;
     this.activeObjects;
     
     //methods
     this.isTickExecutionDone = function() {
-        return this.tickExecutionState.indexToCall == this.activeObjects.length;
+        return this.indexToCall == this.activeObjects.length;
     }    
     this.invokeCurrentActiveObject = function() {
-        return this.activeObjects[this.tickExecutionState.indexToCall].doElementaryAction();
+        return this.activeObjects[this.indexToCall].doElementaryAction();
     }
     //cannot be paused during this method execution
     this.doElementaryActionsUntilValuableOrTickDone = function() {    
         while (!this.isTickExecutionDone() && !this.invokeCurrentActiveObject()) {
-            this.tickExecutionState.indexToCall++;
+            this.indexToCall++;
         }
         
         if (this.isTickExecutionDone())
             this.prepareNextTickExectuion();
         else
-            this.tickExecutionState.indexToCall++;
+            this.indexToCall++;
     }
     this.doTickUntilDone = function() {
         while (!this.isTickExecutionDone()) {
             this.invokeCurrentActiveObject();
-            this.tickExecutionState.indexToCall++;
+            this.indexToCall++;
         }
         
         this.prepareNextTickExectuion();
@@ -54,7 +54,7 @@ var Executor = new function() {
         }
     }
     this.prepareNextTickExectuion = function() {    
-        this.tickExecutionState.indexToCall = 0;        
+        this.indexToCall = 0;        
         this.activeObjects = Environment.getActiveElementaryObjects();
         
         this.currentTick ++;

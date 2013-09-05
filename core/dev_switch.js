@@ -24,7 +24,7 @@ var Switch = function(name) {
         return port;
     }
     this.removePort = function(i) {
-        assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound"));
+        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
         this.ports.splice(i, 1);
         for (var j = i; j < this.ports.length; j++) {
             this.ports[j].setIndex(j);
