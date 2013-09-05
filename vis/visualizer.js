@@ -13,15 +13,14 @@ var Visualizer = new function() {
             
     this.svgContainer;
     this.gVisibleContainer;
+    this.fbDetail;
     // nodes and links SELECTIONs
     this.node;
     this.link;
     // its data
     this.nodesData = [];
     this.linksData = [];
-        
-    this.newNodeType = 'host';
-    
+            
     //saved zoom/drag behavior
     this.zoom;
     this.drag;
@@ -33,6 +32,8 @@ var Visualizer = new function() {
     this.mouseDownNode = null;
     this.selectionRectangle = null;
     this.savedZoom = {};
+    this.newNodeType = 'host';
+    this.editMode = false;
 
 
     this.initialize = function() {
@@ -41,6 +42,7 @@ var Visualizer = new function() {
         this.zoom = d3.behavior.zoom();
         this.drag = d3.behavior.drag();
                     
+        this.fbDetail = d3.select('.fbDetail');
         // init svg
         this.svgContainer = d3.select('.fbChart')
             .append('svg:svg')
@@ -131,6 +133,32 @@ var Visualizer = new function() {
             d3.event.preventDefault();
         }
         this.forceLayout.start();
+        
+        if (this.editMode) {
+            this.showDetails();
+        }
+    }
+    this.showDetails = function() {
+        this.clearFbDetail();
+        if (this.selectedNodes.length == 0) {
+            this.clearFbDetail();
+        }
+        else if (this.selectedNodes.length == 1) {
+            var list = this.fbDetail.append('select');
+            var options = list.selectAll('option').data(this.selectedNodes[0].obj.ports);
+            
+            options.enter()
+                .append('option')
+                .attr('value', function(d) { return d; })
+                //.attr('text', function(d) { return d.upperObject.getObjectName(); });
+                .attr('text', this.printName);
+                
+            options.exit()
+                .remove();
+        }
+    }
+    this.printName = function(d) {
+        return d.upperObject.getObjectName();
     }
     // ----- zoom -------
     this.enableZoom = function() {
@@ -166,7 +194,7 @@ var Visualizer = new function() {
         if (d3.event.button == 0) {
             // left button
             if (d3.event.shiftKey) {
-                // + shift: add node
+                // + shift: add node + link to selected nodes
                 if (!Visualizer.mouseDownNode) {
                     Visualizer.linkNodeToSelectedNodes(Visualizer.addNode(d3.mouse(this)));
                     Visualizer.resetSelection();
@@ -184,29 +212,11 @@ var Visualizer = new function() {
                 }
             }
         }
-                        
+        
         Visualizer.redraw();
     }
-    this.addNode = function(point) {
-        var 
-            newObject = Environment.addObject(Environment.createObject(this.newNodeType)),
-            newNode = {x: point[0], y: point[1], obj: newObject};
-            
-        this.nodesData.push(newNode);
-        return newNode;
-    }
-    this.linkNodeToSelectedNodes = function(node) {
-        this.selectedNodes.forEach(function(d) {
-            var port1 = d.obj.addPort(Environment.getNextUniqueMac());
-            var port2 = node.obj.addPort(Environment.getNextUniqueMac());
-            var tm = Environment.addObject(new TransMedium());
-            Environment.connectPorts(port1, port2, tm);
-            
-            Visualizer.linksData.push({source: d, target: node, tm: tm});
-        });
-    }
     this.hMouseDrag = function() {
-        var point = d3.mouse(Visualizer.gVisibleContainer[0][0]);
+        var point = d3.mouse(Visualizer.gVisibleContainer.node());
           
         Visualizer.gVisibleContainer.select('.rectSelection')
             .attr('x', Math.min(point[0], Visualizer.selectionRectangle[0]))
@@ -224,37 +234,31 @@ var Visualizer = new function() {
         else if (Visualizer.selectionRectangle) {
             Visualizer.selectAreaOfNodes();
             Visualizer.removeSelectionRectangle();
-            Visualizer.selectionRectangle = null;
             Visualizer.enableZoom();
             Visualizer.redraw();
         }        
     }    
     this.hMouseEnterNode = function() {
-        d3.select(this)
-            .attr('r', Visualizer.radius * 1.3);
+        d3.select(this).attr('r', Visualizer.radius * 1.3);
     }
     this.hMouseLeaveNode = function() {
-        d3.select(this)
-            .attr('r', Visualizer.radius);
+        d3.select(this).attr('r', Visualizer.radius);
     }    
     this.hMouseEnterLink = function() {
-        d3.select(this)
-            .attr('stroke-width', Visualizer.strokeWidth * 2);
+        d3.select(this).attr('stroke-width', Visualizer.strokeWidth * 2);
     }
     this.hMouseLeaveLink = function() {
-        d3.select(this)
-            .attr('stroke-width', Visualizer.strokeWidth);
+        d3.select(this).attr('stroke-width', Visualizer.strokeWidth);
     }    
     this.hMouseDownOnLink = function(d) {
         if (d3.event.button == 0) {
             if (d3.event.ctrlKey) {
                 // + ctrl : additive select/deselect
-                var selectedLinks = Visualizer.selectedLinks;
-                var ind = selectedLinks.indexOf(d);
+                var ind = Visualizer.selectedLinks.indexOf(d);
                 if (ind >= 0)
-                    selectedLinks.splice(ind, 1);
+                    Visualizer.selectedLinks.splice(ind, 1);
                 else
-                    selectedLinks.push(d);
+                    Visualizer.selectedLinks.push(d);
             }
             else {
                 // + no modifiers
@@ -272,17 +276,15 @@ var Visualizer = new function() {
             // left button
             if (d3.event.ctrlKey) {
                 // + ctrl : additive select/deselect
-                var selectedNodes = Visualizer.selectedNodes;
-                var ind = selectedNodes.indexOf(d);
+                var ind = Visualizer.selectedNodes.indexOf(d);
                 if (ind >= 0)
-                    selectedNodes.splice(ind, 1);
+                    Visualizer.selectedNodes.splice(ind, 1);
                 else
-                    selectedNodes.push(d);
+                    Visualizer.selectedNodes.push(d);
             }
             else if (d3.event.shiftKey) {
                 // + shift : link this node with every selected node
-                NetTopologyEditor.linkToNode(d, Visualizer.selectedNodes);
-
+                Visualizer.linkNodeToSelectedNodes(d);
                 Visualizer.resetSelection();
                 Visualizer.selectedNodes = [d];
             }
@@ -309,10 +311,10 @@ var Visualizer = new function() {
             }
             case 82: {
                 Visualizer.selectedLinks.forEach(function(d) {
-                    NetTopologyEditor.removeLink(d);
+                    Visualizer.removeLink(d);
                 });
                 Visualizer.selectedNodes.forEach(function(d) {
-                    NetTopologyEditor.removeNode(d);
+                    Visualizer.removeNode(d);
                 });
                 Visualizer.resetSelection();
                 Visualizer.enableZoom();
@@ -344,9 +346,10 @@ var Visualizer = new function() {
     this.selectAreaOfNodes = function() {
         log('find me');
         var svgRect = this.gVisibleContainer.select('.rectSelection'),
+            r = this.radius,
             rect = { 
-                x1: +svgRect.attr('x'), x2 : (+svgRect.attr('x') + (+svgRect.attr('width'))),
-                y1: +svgRect.attr('y'), y2 : (+svgRect.attr('y') + (+svgRect.attr('height')))
+                x1: +svgRect.attr('x') - r, x2 : (+svgRect.attr('x') + (+svgRect.attr('width')) + r),
+                y1: +svgRect.attr('y') - r, y2 : (+svgRect.attr('y') + (+svgRect.attr('height')) + r)
             };
             
         this.selectedNodes = this.nodesData.filter(function(d) { 
@@ -365,8 +368,8 @@ var Visualizer = new function() {
     this.removeSelectionRectangle = function() {
         if (Visualizer.selectionRectangle) {        
             Visualizer.setMouseDragHandler(null);
-            Visualizer.gVisibleContainer.selectAll('.rectSelection')
-                .remove();
+            Visualizer.gVisibleContainer.selectAll('.rectSelection').remove();
+            Visualizer.selectionRectangle = null;
         }
     }
     this.resetSelection = function() {
@@ -375,15 +378,49 @@ var Visualizer = new function() {
         this.clearFbDetail();
     }
 
+    this.addNode = function(point) {
+        var newObject = Environment.addObject(Environment.createObject(this.newNodeType)),
+            newNode = {x: point[0], y: point[1], obj: newObject};
+            
+        this.nodesData.push(newNode);
+        return newNode;
+    }
+    this.linkNodeToSelectedNodes = function(node) {
+        this.selectedNodes.forEach(function(d) {
+            var tm = Environment.connectObjects(d.obj, node.obj);
+            Visualizer.linksData.push({source: d, target: node, tm: tm});
+        });
+    }       
+    this.removeNode = function(node) {
+        var i = this.nodesData.indexOf(node);
+        if (i >= 0) {
+            this.nodesData.splice(i, 1);
+            
+            for (i = 0; i < this.linksData.length; i++) {
+                var d = this.linksData[i];
+                if (d.source == node || d.target == node) {
+                    this.linksData.splice(i, 1);
+                    i--;
+                }
+            }            
+            Environment.removeObject(node.obj);
+        }
+    }
+    this.removeLink = function(link) {
+        var i = this.linksData.indexOf(link);
+        if (i >= 0) {
+            this.linksData.splice(i, 1);            
+            Environment.removeObject(link.tm);
+        }
+    }
     this.setNewNodeType = function(newNodeType) {
         this.newNodeType = newNodeType;
     }
 
     //
     this.clearFbDetail = function() {
-        d3.select('.fbDetail').selectAll('*').remove();
-    }
-    
+        this.fbDetail.selectAll('*').remove();
+    }    
     
     this.setEditMode = function(isEdit) {            
         if (isEdit) {                
@@ -418,5 +455,7 @@ var Visualizer = new function() {
             .attr('value', function(d) { return d.text; })
             .attr('id', function(d) { return d.id; })
             .attr('onClick', function(d) {return d.onClick; });
+            
+        this.editMode = isEdit;
     }
 }

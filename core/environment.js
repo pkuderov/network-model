@@ -9,8 +9,8 @@ var Environment = new function() {
     this.isChanged = false;  
     this.activeObjects = [];
 
+    this.nextUniqueName = 1;
     this.nextUniqueMac = 1;
-    this.nextUniqueSwitch = 1;
     
     //methods
     this.getActiveElementaryObjects = function() {
@@ -29,20 +29,21 @@ var Environment = new function() {
     }
     this.createObject = function(objectTypeName) {        
         var newObject;
-        switch (newNodeType) {
+        switch (objectTypeName) {
             case 'host':
-                newObject = new Host(this.getNextUniqueMac());
+                newObject = new Host(this.getNextUniqueName());
                 break;
             case 'router':
-                newObject = new Router(this.getNextUniqueMac());
+                newObject = new Router(this.getNextUniqueName());
                 break;
             case 'switch':
-                newObject = new Switch(this.getNextUniqueSwitchNumber());
+                newObject = new Switch(this.getNextUniqueName());
                 break;
-            case 'link':
+            case 'tm':
                 newObject = new TransMedium();
+                break;
             default:
-                log("unknown new node type: %s", newNodeType);
+                log("unknown new node type: %s", objectTypeName);
                 break;
         }
         return newObject
@@ -70,8 +71,9 @@ var Environment = new function() {
         this.removeObjectFromEnvironment(obj);
     }
     this.removeTransMedium = function(tm) {        
-        var port1 = tm.directions.toPort1.toPort;
-        var port2 = tm.directions.toPort1.fromPort;
+        var port1 = tm.directions.toPort1.toPort,
+            port2 = tm.directions.toPort1.fromPort;
+            
         port1.owner.removePort(port1.index);
         port2.owner.removePort(port2.index);
         tm.disconnectPorts();
@@ -86,15 +88,19 @@ var Environment = new function() {
             this.isChanged = true;
         }
     }
-    this.connectPorts = function(portX, portY, transMedium) {            
-        //change old ways
-        transMedium.connectPorts(portX, portY);
+    this.connectObjects = function(objX, objY) {
+        var portX = objX.addPort(this.getNextUniqueMac()),
+            portY = objY.addPort(this.getNextUniqueMac()),
+            tm = this.createObject('tm');
+        
+        tm.connectPorts(portX, portY);
+        return this.addObject(tm);
     }
     this.getNextUniqueMac = function() {
         return macIntToString(this.nextUniqueMac++);
     }
-    this.getNextUniqueSwitchNumber = function() {
-        return this.nextUniqueSwitch++;
+    this.getNextUniqueName = function() {
+        return this.nextUniqueName++;
     }
     this.createSubnet = function(firstIpStr, netmaskShort, hostsCount, router) {
         //obsolete method!!! don't use it
