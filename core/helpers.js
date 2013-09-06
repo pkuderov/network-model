@@ -2,6 +2,18 @@
     some help objects and methods
 */
 
+// It's a good idea to have a utility class to wire up inheritance.
+function inherit(cls, superCls) {
+    // We use an intermediary empty constructor to create an
+    // inheritance chain, because using the super class' constructor
+    // might have side effects.
+    var construct = function () {};
+    construct.prototype = superCls.prototype;
+    cls.prototype = new construct;
+    cls.prototype.constructor = cls;
+    cls.super = superCls;
+}
+
 // Production steps of ECMA-262, Edition 5, 15.4.4.18
 // Reference: http://es5.github.com/#x15.4.4.18
 if (!Array.prototype.forEach) { 
@@ -78,10 +90,10 @@ var log = function() {
     console.log(sprintf.apply(this, arguments));
 }
 var slogf = function() {
-    return sprintf("[%'05d]|  %-40s|  %s", Executor.currentTick, arguments[0].getObjectName(), sprintf.apply(this, Array.prototype.slice.call(arguments).slice(1)));
+    return sprintf("[%'05d]|  %-40s|  %s", Executor.currentTick, arguments[0].getObjectName(), sprintf.apply(this, Array.prototype.slice.call(arguments, 1)));
 }
 var logf = function() {
-    log(slogf.apply(this, arguments));
+    console.log(slogf.apply(this, arguments));
 }
 var alert = window.alert;
 var assert = console.assert;

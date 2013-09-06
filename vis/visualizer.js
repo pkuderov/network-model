@@ -8,6 +8,7 @@ var Visualizer = new function() {
     this.height = 720;
     this.width = 720;
     this.radius = 10;
+    this.gScale = 3;
     // link line stroke width
     this.strokeWidth = 3;
             
@@ -37,7 +38,6 @@ var Visualizer = new function() {
 
 
     this.initialize = function() {
-        this.setEditMode(true);
         
         this.zoom = d3.behavior.zoom();
         this.drag = d3.behavior.drag();
@@ -59,10 +59,12 @@ var Visualizer = new function() {
                         
         this.gVisibleContainer
             .append('rect')
-                .attr('width', this.width * 2)
-                .attr('height', this.height * 2)
-                .attr('transform', 'translate(' + [-this.width/2, -this.height/2] + ')')
-                .attr('fill', 'white');
+                .attr('width', this.width * this.gScale)
+                .attr('height', this.height * this.gScale)
+                .attr('transform', 'translate(' + [(1 - this.gScale)*this.width/2, (1 - this.gScale)*this.height/2] + ')')
+                .attr('fill', 'white')
+                .attr('stroke', 'grey')
+                .attr('stroke-width', 1);
         
         
         this.node = this.gVisibleContainer.selectAll('.node');
@@ -79,15 +81,50 @@ var Visualizer = new function() {
                 
         // add global callbacks
         d3.select(window)
-            .on('keydown', this.hKeyDown)
             .on('keyup', this.hKeyUp)
             .on('mouseup', this.hMouseUp);
             
+        
         this.redraw();
-    }
-    this.setMouseDragHandler = function(handler) {
-        d3.select(window)
-            .on('mousemove', handler);
+        this.setEditMode(true);
+        
+        this.test();
+    }    
+    this.setEditMode = function(isEdit) {            
+        if (isEdit) {                
+            var buttons = [
+                { text: 'host', onClick: "Visualizer.setNewNodeType('host')" },
+                { text: 'router', onClick: "Visualizer.setNewNodeType('router')" },
+                { text: 'switch', onClick: "Visualizer.setNewNodeType('switch')" },
+                { text: 'freeze', onClick: "Visualizer.setEditMode(false)" , id: 'btnEditMode'}
+            ];            
+                    
+            Executor.pause();         
+        }
+        else {
+            var buttons = [
+                { text: 'play', onClick: "Executor.play()" },
+                { text: 'pause', onClick: "Executor.pause()" },
+                { text: 'step', onClick: "Executor.stepForward()" },
+                { text: 'edit', onClick: "Visualizer.setEditMode(true)" , id: 'btnEditMode'}
+            ];            
+            
+            this.forceLayout.stop();
+        }
+        
+        d3.select('.fbManage')
+            .selectAll('input')
+            .remove();
+            
+        d3.select('.fbManage').selectAll('input').data(buttons)
+            .enter()
+            .insert('input')
+            .attr('type', 'button')
+            .attr('value', function(d) { return d.text; })
+            .attr('id', function(d) { return d.id; })
+            .attr('onClick', function(d) {return d.onClick; });
+            
+        this.editMode = isEdit;
     }
     // redraw graph    
     this.redraw = function() {
@@ -138,54 +175,67 @@ var Visualizer = new function() {
             this.showDetails();
         }
     }
+    this.test = function() {
+        var point = {x: 0, y: 0};
+        for (var i = 0; i < 7; i++) {
+            this.selectedNodes.push(this.addNode(point));
+        }
+        var last = this.addNode(point);
+        this.linkNodeToSelectedNodes(last);
+        this.selectedNodes = [last];        
+        this.redraw();
+    }
     this.showDetails = function() {
         this.clearFbDetail();
         if (this.selectedNodes.length == 0) {
             this.clearFbDetail();
         }
         else if (this.selectedNodes.length == 1) {
-            var list = this.fbDetail.append('select');
-            var options = list.selectAll('option').data(this.selectedNodes[0].obj.ports);
+            var node = this.selectedNodes[0];
+            var host = node.obj;
             
-            options.enter()
-                .append('option')
-                .attr('value', function(d) { return d; })
-                //.attr('text', function(d) { return d.upperObject.getObjectName(); });
-                .attr('text', this.printName);
-                
-            options.exit()
-                .remove();
+            if (host instanceof Router) {
+                this.showIpDetails(host);
+            }
         }
     }
-    this.printName = function(d) {
-        return d.upperObject.getObjectName();
+    this.showIpDetails = function(host) {
+        var ipAddressesFieldset = this.appendFieldset(this.fbDetail, 'Ip addresses:');
+        this.appendDropDown(
+            ipAddressesFieldset, 'Select net interface', host.netIfaces, 
+            function(d) { return (d instanceof LoopbackNetIface) ? 'loopback' : d.mac; }
+        );
     }
-    // ----- zoom -------
-    this.enableZoom = function() {
-        //restore zoom state
-
-        log('zoom enabled');
-        this.zoom
-            .translate(this.savedZoom.translate)
-            .scale(this.savedZoom.scale);
-            
-        this.svgContainer.select('g')
-            .call(this.zoom.on('zoom', this.hRescale))
-            .on('dblclick.zoom', null);
+    this.appendDropDown = function(element, initialText, data, stringGetter, hMouseOverItem) {
+        var container = element.append('div')
+            .attr('class', 'dropdown-wrapper');
+        var output = container.append('p')
+            .text(initialText);
+        var list = container.append('ul')
+            .attr('class', 'dropdown-list')
+            .selectAll('li').data(data);
         
-        d3.event.translate = clone(this.zoom.translate());
-        d3.event.scale = clone(this.zoom.scale());
+        list.enter().append('li')
+            .on('mouseover', hMouseOverItem)
+            .on('mouseup', function(d) { 
+                    output.text((d instanceof LoopbackNetIface) ? 'loopback' : d.mac); 
+                    list.style('display', 'none')
+                        .transition()
+                        .duration(500)
+                        .style('display', null);
+                }
+            )
+            .attr('class', 'dropdown-item')
+            .text(stringGetter);
+            
+        list.exit()
+            .remove();
     }
-    this.disableZoom = function() {
-        log('zoom disabled');
-        this.savedZoom = {
-            translate: clone(this.zoom.translate()),
-            scale: clone(this.zoom.scale())
-        };
-        this.svgContainer.select('g')
-            .call(this.zoom.on('zoom', null));
+    this.appendFieldset = function(container, legend) {
+        var fieldset = container.append('fieldset');
+        fieldset.append('legend').text(legend);
+        return fieldset;
     }
-    
     // EVENT HANDLERS ------------------
     this.hRescale = function() {
         Visualizer.gVisibleContainer.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')');
@@ -195,21 +245,15 @@ var Visualizer = new function() {
             // left button
             if (d3.event.shiftKey) {
                 // + shift: add node + link to selected nodes
-                if (!Visualizer.mouseDownNode) {
-                    Visualizer.linkNodeToSelectedNodes(Visualizer.addNode(d3.mouse(this)));
-                    Visualizer.resetSelection();
-                }
+                Visualizer.linkNodeToSelectedNodes(Visualizer.addNode(d3.mouse(this)));
+                Visualizer.resetSelection();
             }
             else if (d3.event.ctrlKey) {
-                if (!Visualizer.mouseDownNode && !Visualizer.mouseDownLink) {
-                    Visualizer.createSelectionRectangle(d3.mouse(this));
-                    Visualizer.disableZoom();
-                }
+                Visualizer.createSelectionRectangle(d3.mouse(this));
+                Visualizer.disableZoom();
             }
-            else {            
-                if ((!Visualizer.mouseDownNode && Visualizer.selectedNodes.length > 0) || (!Visualizer.mouseDownLink && Visualizer.selectedLinks.length > 0)) {
-                    Visualizer.resetSelection();
-                }
+            else {
+                Visualizer.resetSelection();
             }
         }
         
@@ -225,7 +269,7 @@ var Visualizer = new function() {
             .attr('height',  Math.abs(point[1] - Visualizer.selectionRectangle[1]));
     }
     
-    this.hMouseUp = function() {        
+    this.hMouseUp = function() {
         if (Visualizer.mouseDownNode || Visualizer.mouseDownLink) {
             Visualizer.mouseDownNode = null;
             Visualizer.mouseDownLink = null;
@@ -237,18 +281,6 @@ var Visualizer = new function() {
             Visualizer.enableZoom();
             Visualizer.redraw();
         }        
-    }    
-    this.hMouseEnterNode = function() {
-        d3.select(this).attr('r', Visualizer.radius * 1.3);
-    }
-    this.hMouseLeaveNode = function() {
-        d3.select(this).attr('r', Visualizer.radius);
-    }    
-    this.hMouseEnterLink = function() {
-        d3.select(this).attr('stroke-width', Visualizer.strokeWidth * 2);
-    }
-    this.hMouseLeaveLink = function() {
-        d3.select(this).attr('stroke-width', Visualizer.strokeWidth);
     }    
     this.hMouseDownOnLink = function(d) {
         if (d3.event.button == 0) {
@@ -270,6 +302,7 @@ var Visualizer = new function() {
             Visualizer.disableZoom();
             Visualizer.redraw();
         }
+        d3.event.stopPropagation();
     }
     this.hMouseDownOnNode = function(d) {
         if (d3.event.button == 0) {
@@ -298,12 +331,10 @@ var Visualizer = new function() {
             Visualizer.disableZoom();         
             Visualizer.redraw();
         }
-    }
-    this.hKeyDown = function() {
-//        log("%d", d3.event.keyCode);
+        d3.event.stopPropagation();
     }
     this.hKeyUp = function() {
-//        log("%d", d3.event.keyCode);
+        //log("%d", d3.event.keyCode);
         switch (d3.event.keyCode) {
             case 17: { // ctrl
                 Visualizer.removeSelectionRectangle();
@@ -323,6 +354,19 @@ var Visualizer = new function() {
             }
         }
     }
+    this.hMouseEnterNode = function() {
+        d3.select(this).attr('r', Visualizer.radius * 1.3);
+    }
+    this.hMouseLeaveNode = function() {
+        d3.select(this).attr('r', Visualizer.radius);
+    }    
+    this.hMouseEnterLink = function() {
+        d3.select(this).attr('stroke-width', Visualizer.strokeWidth * 2);
+
+    }
+    this.hMouseLeaveLink = function() {
+        d3.select(this).attr('stroke-width', Visualizer.strokeWidth);
+    }    
     
     this.hDragNode = function(d) {
         d.x = d3.event.x;
@@ -343,6 +387,33 @@ var Visualizer = new function() {
             .attr('cx', function(d) { return d.x; })
             .attr('cy', function(d) { return d.y; });
     }
+    // ------------- zoom ---------------
+    this.enableZoom = function() {
+        //restore zoom state
+
+        //log('zoom enabled');
+        this.zoom
+            .translate(this.savedZoom.translate)
+            .scale(this.savedZoom.scale);
+            
+        this.svgContainer.select('g')
+            .call(this.zoom.on('zoom', this.hRescale))
+            .on('dblclick.zoom', null);
+        
+        d3.event.translate = clone(this.zoom.translate());
+        d3.event.scale = clone(this.zoom.scale());
+    }
+    this.disableZoom = function() {
+        //log('zoom disabled');
+        this.savedZoom = {
+            translate: clone(this.zoom.translate()),
+            scale: clone(this.zoom.scale())
+        };
+        this.svgContainer.select('g')
+            .call(this.zoom.on('zoom', null));
+    }
+
+    // ----------- selection area & selections ----------
     this.selectAreaOfNodes = function() {
         log('find me');
         var svgRect = this.gVisibleContainer.select('.rectSelection'),
@@ -363,11 +434,11 @@ var Visualizer = new function() {
             .attr('y', point[1]);
                 
         this.selectionRectangle = clone(point);
-        this.setMouseDragHandler(this.hMouseDrag);
+        d3.select(window).on('mousemove', this.hMouseDrag);
     }
     this.removeSelectionRectangle = function() {
         if (Visualizer.selectionRectangle) {        
-            Visualizer.setMouseDragHandler(null);
+            d3.select(window).on('mousemove', null);
             Visualizer.gVisibleContainer.selectAll('.rectSelection').remove();
             Visualizer.selectionRectangle = null;
         }
@@ -378,6 +449,7 @@ var Visualizer = new function() {
         this.clearFbDetail();
     }
 
+    // ------------ data manipulations ------------
     this.addNode = function(point) {
         var newObject = Environment.addObject(Environment.createObject(this.newNodeType)),
             newNode = {x: point[0], y: point[1], obj: newObject};
@@ -422,40 +494,4 @@ var Visualizer = new function() {
         this.fbDetail.selectAll('*').remove();
     }    
     
-    this.setEditMode = function(isEdit) {            
-        if (isEdit) {                
-            var buttons = [
-                { text: 'host', onClick: "Visualizer.setNewNodeType('host')" },
-                { text: 'router', onClick: "Visualizer.setNewNodeType('router')" },
-                { text: 'switch', onClick: "Visualizer.setNewNodeType('switch')" },
-                { text: 'freeze', onClick: "Visualizer.setEditMode(false)" , id: 'btnEditMode'}
-            ];            
-                    
-            Executor.pause();         
-        }
-        else {
-            var buttons = [
-                { text: 'play', onClick: "Executor.play()" },
-                { text: 'pause', onClick: "Executor.pause()" },
-                { text: 'step', onClick: "Executor.stepForward()" },
-                { text: 'edit', onClick: "Visualizer.setEditMode(true)" , id: 'btnEditMode'}
-            ];            
-            
-            this.forceLayout.stop();
-        }
-        
-        d3.select('.fbManage')
-            .selectAll('input')
-            .remove();
-            
-        d3.select('.fbManage').selectAll('input').data(buttons)
-            .enter()
-            .insert('input')
-            .attr('type', 'button')
-            .attr('value', function(d) { return d.text; })
-            .attr('id', function(d) { return d.id; })
-            .attr('onClick', function(d) {return d.onClick; });
-            
-        this.editMode = isEdit;
-    }
 }

@@ -1,5 +1,4 @@
 var Host = function(name) {    
-    //this.prototype = new Router(name);
     Router.call(this, name);
 
     this.objectTypeName = 'host';
@@ -7,5 +6,4 @@ var Host = function(name) {
     //add host-specific protocol handlers
     this.protocolHandlers.UDP = new UDPHandler(this);
 }
-
-
+inherit(Host, Router);

@@ -105,6 +105,7 @@ var RoutingTable = function(owner) {
         else {
             if (metrics == undefined)
                 metrics = 1;
+                
             this.table.push({
                 ip: ip,
                 netmask: netmask,

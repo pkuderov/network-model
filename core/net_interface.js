@@ -12,7 +12,7 @@ var NetIface = function(owner, lowerObject, mac) {
     this.promiscousMode = false;
     this.addresses = [];
     
-    //region #methods
+    //methods
     this.getObjectName = function() {
         return sprintf("%s.%s%s", this.owner.getObjectName(), this.objectTypeName, this.mac);
     }
@@ -38,7 +38,7 @@ var NetIface = function(owner, lowerObject, mac) {
         return false;
     }
     this.addIp = function(ip, netmask) {
-        if (ip == getBroadcastIp(ip, netmask) || ip == getCanonicalIp(ip, netmask) ||isZeroNetwork(ip, netmask)) {
+        if (ip == getBroadcastIp(ip, netmask) || ip == getCanonicalIp(ip, netmask) || isZeroNetwork(ip, netmask)) {
             //ip is incorrect
             logf(this, "ip address %s is canonical or broadcast or has network prefix = 0 for particular netmask %s", ipIntToString(ip), ipIntToString(netmask));
             return;
@@ -111,3 +111,4 @@ var LoopbackNetIface = function(owner) {
         this.receive(this, frame);
     }
 }
+inherit(LoopbackNetIface, NetIface);

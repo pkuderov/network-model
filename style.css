@@ -1,87 +1,94 @@
-
+/* general */
 html {
-  min-width: 1040px;
+    min-width: 1040px;
 }
 
 body {
-  font-family: "Courier New", Courier, monospace;
-  margin: 1em auto 4em auto;
-  position: relative;
-  width: 960px;
+    font-family: "Courier New", Courier, monospace;
+    margin: 1em auto 4em auto;
+    position: relative;
+    width: 960px;
+}
+body {
+    background: whitesmoke;
 }
 
 h1 {
-  font-size: 64px;
-  font-weight: 300;
-  letter-spacing: -2px;
-  margin: .3em 0 .1em 0;
+    font-size: 64px;
+    font-weight: 300;
+    letter-spacing: -2px;
+    margin: .3em 0 .1em 0;
 }
 
 h1, h2 {
-  text-rendering: optimizeLegibility;
+    text-rendering: optimizeLegibility;
 }
 
 aside {
-  font-size: small;
-  left: 780px;
-  position: absolute;
-  text-align: right;
-  width: 180px;
+    font-size: small;
+    left: 780px;
+    position: absolute;
+    text-align: right;
+    width: 180px;
 }
 
-.fbox  {
-  border: 1px solid #DEDEDE;  
-  background: #fff;  
-  box-shadow: 0 0 4px rgba(0,0,0,.2);
-  position: relative;
+/* ============ */
+div.fbox  {
+    border: 1px solid #DEDEDE;  
+    background: #fff;  
+    box-shadow: 0 0 4px rgba(0,0,0,.2);
+    position: relative;
+    font-size: 12px;
 }
 
 .fbManage {
-  padding: 10px;
+    padding: 10px;
 }
 
 .fbChart {
-  height: 720px;
-  width: 720px;
-  float: left;
+    height: 720px;
+    width: 720px;
+    float: left;
 }
 
 .fbDetail {
-  width: 238px;
-  height: 720px;
-  margin-left: -2px;
-  float: right;
+    width: 230px;
+    height: 712px;
+/*    margin-left: -2px;*/
+    float: right;
+    padding: 4px 3px;
 }
 
 #btnEditMode {
-  float: right;
+    float: right;
 }
 
+/* graph style */
 .node {
-  stroke: #333;
-  stroke-width: 1.5px;
-  cursor: crosshair;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: crosshair;
 }
 
 .host {
-  fill: #eee;
+    fill: #eee;
 }
 
 .router {
-  fill: #4d4d4d;
+    fill: #4d4d4d;
 }
 
 .switch {
-  fill: #ccf2aa;
+    fill: #ccf2aa;
 }
 
 .link {
-  stroke: #999;
-  cursor: crosshair;
+    stroke: #999;
+    cursor: crosshair;
 }
 
 .selected {
-  stroke: #ff7f0e;
+    stroke: #ff7f0e;
 }
 
 .rectSelection {
@@ -89,6 +96,44 @@ aside {
     stroke-width: 2;
     stroke-dasharray: 2 2;
     fill: none
+}
+
+/* dropdown menu hack */
+div.dropdown-wrapper {
+    padding: 0;
+    border: 2px solid #DEDEDE;
+    border-radius: 3;
+    background: transparent;
+}
+.dropdown-wrapper p,li {
+    padding: 6px 4px 2px 4px;    
+    margin: 0;
+}
+
+ul.dropdown-list {
+    display: none;
+    position: absolute;
+    list-style-type: none;    
+    margin: 2px -2px 0px -2px;
+    padding: 0;
+}
+.dropdown-wrapper:hover .dropdown-list {
+    display: block;
+}
+
+li.dropdown-item {
+    background-color: white;
+    cursor: pointer;
+    border-left: 2px solid #DEDEDE;
+    border-right: 2px solid #DEDEDE;
+    border-bottom: 2px solid #DEDEDE;
+}
+.dropdown-item:last-child {
+    border-bottom-left-radius: 3;
+    border-bottom-right-radius: 3;
+}
+.dropdown-item:hover {
+    background-color: #DEDEDE;
 }
 
 /*
