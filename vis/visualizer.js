@@ -201,31 +201,27 @@ var Visualizer = new function() {
         }
     }
     this.showIpDetails = function(host) {
-        this.appendIpFieldset(this.fbDetail);
-    }
-    this.appendDropDown = function(element, initialText, data, stringGetter, hMouseOverItem) {
-        var container = element.append('div')
-            .attr('class', 'dropdown-wrapper');
-        var output = container.append('p')
-            .text(initialText);
-        var list = container.append('ul')
-            .attr('class', 'dropdown-list')
-            .selectAll('li').data(data);
+        var ipFieldset = this.appendIpFieldset(this.fbDetail);
+        var ddNetIface = ipFieldset.dropdownNetIfaces;
         
-        list.enter().append('li')
-            .on('mouseover', hMouseOverItem)
-            .on('mouseup', function(d) { 
-                    output.text((d instanceof LoopbackNetIface) ? 'loopback' : d.mac); 
-                    list.style('display', 'none')
+        ddNetIface.item = ddNetIface.item.data(host.netIfaces);
+        ddNetIface.item.enter().append('li')
+            .on('mouseenter', this.hMouseEnterItem)
+            .on('mouseleave', this.hMouseLeaveItem)
+            .on('mouseup', function(d) {
+                    ddNetIface.pOutput.text((d instanceof LoopbackNetIface) ? 'loopback' : d.mac);
+                    ddNetIface.ulList
+                        .style('display', 'none')
                         .transition()
-                        .duration(500)
+                        .duration(100)
                         .style('display', null);
                 }
             )
             .attr('class', 'dropdown-item')
-            .text(stringGetter);
+            .attr('value', function(d) { return d; })
+            .text(function(d) { return (d instanceof LoopbackNetIface) ? 'loopback' : d.mac; });
             
-        list.exit()
+        ddNetIface.item.exit()
             .remove();
     }
     this.appendIpFieldset = function(container) {
@@ -236,13 +232,15 @@ var Visualizer = new function() {
         var btnRemoveIp = fieldset.append('input')
             .attr('type', 'button')
             .attr('value', 'Remove IP')
-            .style('display', 'hidden');
+            .attr('disabled', 'disabled');
         fieldset.append('p')
-            .text('IP/Netmask');
-        var inputIpNetmask = fieldset.append('input');
+            .text('Type new IP/Netmask');
+        var inputIpNetmask = fieldset.append('input')
+            .style('width', 120);
         var btnAddIp = fieldset.append('input')
             .attr('type', 'button')
-            .attr('value', 'Add IP');
+            .attr('value', 'Add IP')
+            .attr('disabled', 'disabled');
         
         return {
             fieldset: fieldset,
@@ -260,10 +258,11 @@ var Visualizer = new function() {
             .text(initialText);
         var ulList = divWrapper.append('ul')
             .attr('class', 'dropdown-list');
+        var item = ulList.selectAll('li');
         
-        if (disabled) this.setDisabledColor(pOutput);
+        this.setDisabledColor(pOutput, disabled);
             
-        return {divWrapper: divWrapper, pOutput: pOutput, ulList: ulList};
+        return {divWrapper: divWrapper, pOutput: pOutput, ulList: ulList, item: item};
     }
     this.setDisabledColor = function(obj, disabled) {
         obj.style('color', disabled ? this.colorDisabled : null);

@@ -137,6 +137,11 @@ li.dropdown-item {
     background-color: #DEDEDE;
 }
 
+/* other staff */
+.inputIpNetmask {
+    width: 120px;
+}
+
 /*
 h2 {
   margin-top: 2em;
