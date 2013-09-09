@@ -104,6 +104,7 @@ div.dropdown-wrapper {
     border: 2px solid #DEDEDE;
     border-radius: 3;
     background: transparent;
+    margin-bottom: 5px;
 }
 .dropdown-wrapper p,li {
     padding: 6px 4px 2px 4px;    

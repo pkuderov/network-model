@@ -35,7 +35,8 @@ var Visualizer = new function() {
     this.savedZoom = {};
     this.newNodeType = 'host';
     this.editMode = false;
-
+    
+    this.colorDisabled = '#DEDEDE';
 
     this.initialize = function() {
         
@@ -200,11 +201,7 @@ var Visualizer = new function() {
         }
     }
     this.showIpDetails = function(host) {
-        var ipAddressesFieldset = this.appendFieldset(this.fbDetail, 'Ip addresses:');
-        this.appendDropDown(
-            ipAddressesFieldset, 'Select net interface', host.netIfaces, 
-            function(d) { return (d instanceof LoopbackNetIface) ? 'loopback' : d.mac; }
-        );
+        this.appendIpFieldset(this.fbDetail);
     }
     this.appendDropDown = function(element, initialText, data, stringGetter, hMouseOverItem) {
         var container = element.append('div')
@@ -231,10 +228,45 @@ var Visualizer = new function() {
         list.exit()
             .remove();
     }
-    this.appendFieldset = function(container, legend) {
+    this.appendIpFieldset = function(container) {
         var fieldset = container.append('fieldset');
-        fieldset.append('legend').text(legend);
-        return fieldset;
+        fieldset.append('legend').text('Ip addresses:');
+        var dropdownNetIfaces = this.appendDropDown(fieldset, 'Select net interface');
+        var dropdownIpAddresses = this.appendDropDown(fieldset, 'Select IP', true);
+        var btnRemoveIp = fieldset.append('input')
+            .attr('type', 'button')
+            .attr('value', 'Remove IP')
+            .style('display', 'hidden');
+        fieldset.append('p')
+            .text('IP/Netmask');
+        var inputIpNetmask = fieldset.append('input');
+        var btnAddIp = fieldset.append('input')
+            .attr('type', 'button')
+            .attr('value', 'Add IP');
+        
+        return {
+            fieldset: fieldset,
+            dropdownNetIfaces: dropdownNetIfaces,
+            dropdownIpAddresses: dropdownIpAddresses,
+            btnRemoveIp: btnRemoveIp,
+            inputIpNetmask: inputIpNetmask,
+            btnAddIp: btnAddIp
+        };
+    }
+    this.appendDropDown = function(container, initialText, disabled) {
+        var divWrapper = container.append('div')
+            .attr('class', 'dropdown-wrapper');
+        var pOutput = divWrapper.append('p')
+            .text(initialText);
+        var ulList = divWrapper.append('ul')
+            .attr('class', 'dropdown-list');
+        
+        if (disabled) this.setDisabledColor(pOutput);
+            
+        return {divWrapper: divWrapper, pOutput: pOutput, ulList: ulList};
+    }
+    this.setDisabledColor = function(obj, disabled) {
+        obj.style('color', disabled ? this.colorDisabled : null);
     }
     // EVENT HANDLERS ------------------
     this.hRescale = function() {
