@@ -10,7 +10,15 @@ var VisInfo = new function() {
                 
                 if (host instanceof Router) {
                     IpInfo.showIpDetails(host);
+                    RouteInfo.showRouteDetails(host);
                 }
+            }
+        }
+        else {
+            if (nodes.length <= 2) {
+                var fromHost = nodes.length >= 1 ? nodes[0].obj : null;
+                var toHost = nodes.length >= 2 ? nodes[1].obj : null;
+                SendInfo.showSendDetails(fromHost, toHost);
             }
         }
     }
