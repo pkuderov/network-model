@@ -36,10 +36,7 @@ var Visualizer = new function() {
     this.newNodeType = 'host';
     this.editMode = false;
     
-    this.colorDisabled = '#DEDEDE';
-
-    this.initialize = function() {
-        
+    this.initialize = function() {        
         this.zoom = d3.behavior.zoom();
         this.drag = d3.behavior.drag();
                     
@@ -69,7 +66,7 @@ var Visualizer = new function() {
         
         
         this.node = this.gVisibleContainer.selectAll('.node');
-        this.link = this.gVisibleContainer.selectAll('.link');        
+        this.link = this.gVisibleContainer.selectAll('.link');
         
         // init force layout
         this.forceLayout = d3.layout.force()
@@ -79,6 +76,8 @@ var Visualizer = new function() {
             .linkDistance(this.linkDistance)
             .charge(this.charge)
             .on('tick', this.hForceLayoutTick);
+            
+        VisLabels.initialize();
                 
         // add global callbacks
         d3.select(window)
@@ -86,10 +85,10 @@ var Visualizer = new function() {
             .on('mouseup', this.hMouseUp);
             
         
-        this.redraw();
         this.setEditMode(true);
+        this.redraw();
         
-        this.test();
+        this.test2();
     }    
     this.setEditMode = function(isEdit) {            
         if (isEdit) {                
@@ -100,7 +99,7 @@ var Visualizer = new function() {
                 { text: 'freeze', onClick: "Visualizer.setEditMode(false)" , id: 'btnEditMode'}
             ];            
                     
-            Executor.pause();         
+            Executor.pause();
         }
         else {
             var buttons = [
@@ -125,12 +124,21 @@ var Visualizer = new function() {
             .attr('id', function(d) { return d.id; })
             .attr('onClick', function(d) {return d.onClick; });
             
+        this.clearFbDetail();
         this.editMode = isEdit;
+        
+        VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
     }
     // redraw graph    
     this.redraw = function() {
+        if (!this.editMode) {
+            this.redrawMessages();
+            VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
+            return;
+        }
+        
         // links
-        this.link = this.link.data(this.linksData);
+        this.link = this.link.data(this.linksData, function(d) { return Visualizer.linksData.indexOf(d); });
         this.link.enter().insert('line', '.node')
             .attr('class', 'link')
             .on('mouseenter', this.hMouseEnterLink)
@@ -144,8 +152,8 @@ var Visualizer = new function() {
         this.link.classed('selected', function(d) { return Visualizer.selectedLinks.indexOf(d) >= 0; });
             
         // nodes
-        this.node = this.node.data(this.nodesData);
-        this.node.enter().append('circle')
+        this.node = this.node.data(this.nodesData, function(d) { return Visualizer.nodesData.indexOf(d); });
+        this.node.enter().insert('circle', '.label')
             .attr('class', function(d) { return d.obj.objectTypeName + ' node'; })
             .on('mouseenter', this.hMouseEnterNode)
             .on('mouseleave', this.hMouseLeaveNode)
@@ -158,7 +166,7 @@ var Visualizer = new function() {
             .ease('elastic')
             .attr('r', this.radius);
                        
-       this.node.exit()
+        this.node.exit()
             .transition()
             .duration(500)
             .attr('r', 0)
@@ -166,18 +174,56 @@ var Visualizer = new function() {
                         
         this.node.classed('selected', function(d) { return Visualizer.selectedNodes.indexOf(d) >= 0; });
         
+        VisLabels.redraw();
+        
         if (d3.event) {
             // prevent browser's default behavior
             d3.event.preventDefault();
         }
         this.forceLayout.start();
         
-        if (this.editMode) {
-            this.showDetails();
+        VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
+    }
+    this.redrawMessages = function() {
+        var messages = [];
+        for (var i = 0; i < this.linksData.length; i++ ) {
+            var link = this.linksData[i];
+            if (link.tm.directions.toPort1.busy) {
+                messages.push({
+                    link: link,
+                    source: link.target,
+                    target: link.source,
+                    percent: link.tm.directions.toPort1.getFrameDeliveryPercent()
+                });
+            }
+            if (link.tm.directions.toPort2.busy) {
+                messages.push({
+                    link: link,
+                    source: link.source,
+                    target: link.target,
+                    percent: link.tm.directions.toPort2.getFrameDeliveryPercent()
+                });
+            }
         }
+        var r = this.radius;
+        
+        this.gVisibleContainer.selectAll('.message').remove();
+        this.gVisibleContainer.selectAll('.message').data(messages).enter().insert('circle')
+            .attr('class', 'message')
+            .attr('r', 2)
+            .attr('fill', 'red')
+            .each(function(d) {
+                    var dx = d.target.x - d.source.x;
+                    var dy = d.target.y - d.source.y;
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    d.p = ((dist - 2 * r) * d.percent + r) / dist;
+                }
+            )
+            .attr('cx', function(d) { return d.source.x + d.p * (d.target.x - d.source.x); })
+            .attr('cy', function(d) { return d.source.y + d.p * (d.target.y - d.source.y); });
     }
     this.test = function() {
-        var point = {x: 0, y: 0};
+        var point = [0, 0];
         for (var i = 0; i < 7; i++) {
             this.selectedNodes.push(this.addNode(point));
         }
@@ -186,86 +232,21 @@ var Visualizer = new function() {
         this.selectedNodes = [last];        
         this.redraw();
     }
-    this.showDetails = function() {
-        this.clearFbDetail();
-        if (this.selectedNodes.length == 0) {
-            this.clearFbDetail();
-        }
-        else if (this.selectedNodes.length == 1) {
-            var node = this.selectedNodes[0];
-            var host = node.obj;
-            
-            if (host instanceof Router) {
-                this.showIpDetails(host);
-            }
-        }
-    }
-    this.showIpDetails = function(host) {
-        var ipFieldset = this.appendIpFieldset(this.fbDetail);
-        var ddNetIface = ipFieldset.dropdownNetIfaces;
+    this.test2 = function() {
+        var point = [0, 0];
+        var x = this.addNode(point);
+        this.selectedNodes.push(x);
+        var y = this.addNode(point);
         
-        ddNetIface.item = ddNetIface.item.data(host.netIfaces);
-        ddNetIface.item.enter().append('li')
-            .on('mouseenter', this.hMouseEnterItem)
-            .on('mouseleave', this.hMouseLeaveItem)
-            .on('mouseup', function(d) {
-                    ddNetIface.pOutput.text((d instanceof LoopbackNetIface) ? 'loopback' : d.mac);
-                    ddNetIface.ulList
-                        .style('display', 'none')
-                        .transition()
-                        .duration(100)
-                        .style('display', null);
-                }
-            )
-            .attr('class', 'dropdown-item')
-            .attr('value', function(d) { return d; })
-            .text(function(d) { return (d instanceof LoopbackNetIface) ? 'loopback' : d.mac; });
-            
-        ddNetIface.item.exit()
-            .remove();
-    }
-    this.appendIpFieldset = function(container) {
-        var fieldset = container.append('fieldset');
-        fieldset.append('legend').text('Ip addresses:');
-        var dropdownNetIfaces = this.appendDropDown(fieldset, 'Select net interface');
-        var dropdownIpAddresses = this.appendDropDown(fieldset, 'Select IP', true);
-        var btnRemoveIp = fieldset.append('input')
-            .attr('type', 'button')
-            .attr('value', 'Remove IP')
-            .attr('disabled', 'disabled');
-        fieldset.append('p')
-            .text('Type new IP/Netmask');
-        var inputIpNetmask = fieldset.append('input')
-            .style('width', 120);
-        var btnAddIp = fieldset.append('input')
-            .attr('type', 'button')
-            .attr('value', 'Add IP')
-            .attr('disabled', 'disabled');
+        this.linkNodeToSelectedNodes(y);
         
-        return {
-            fieldset: fieldset,
-            dropdownNetIfaces: dropdownNetIfaces,
-            dropdownIpAddresses: dropdownIpAddresses,
-            btnRemoveIp: btnRemoveIp,
-            inputIpNetmask: inputIpNetmask,
-            btnAddIp: btnAddIp
-        };
-    }
-    this.appendDropDown = function(container, initialText, disabled) {
-        var divWrapper = container.append('div')
-            .attr('class', 'dropdown-wrapper');
-        var pOutput = divWrapper.append('p')
-            .text(initialText);
-        var ulList = divWrapper.append('ul')
-            .attr('class', 'dropdown-list');
-        var item = ulList.selectAll('li');
+        x.obj.netIfaces[1].addIp(ipStringToInt('192.168.55.212'), netmaskShortToFull(28));
+        y.obj.netIfaces[1].addIp(ipStringToInt('192.168.55.211'), netmaskShortToFull(28));
+        x.obj.protocolHandlers.UDP.send(ipStringToInt('192.168.55.212'), 8080, ipStringToInt('192.168.55.211'), 8090, 
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        );
         
-        this.setDisabledColor(pOutput, disabled);
-            
-        return {divWrapper: divWrapper, pOutput: pOutput, ulList: ulList, item: item};
-    }
-    this.setDisabledColor = function(obj, disabled) {
-        obj.style('color', disabled ? this.colorDisabled : null);
+        this.redraw();
     }
     // EVENT HANDLERS ------------------
     this.hRescale = function() {
@@ -405,9 +386,10 @@ var Visualizer = new function() {
         d3.select(this)
             .attr('cx', d.x)
             .attr('cy', d.y);
-    }    
-
+    } 
     this.hForceLayoutTick = function() {
+        VisLabels.forceLayout.start();
+        
         Visualizer.link
             .attr('x1', function(d) { return d.source.x; })
             .attr('y1', function(d) { return d.source.y; })
@@ -479,6 +461,10 @@ var Visualizer = new function() {
         this.selectedLinks = [];
         this.clearFbDetail();
     }
+    //
+    this.clearFbDetail = function() {
+        this.fbDetail.selectAll('*').remove();
+    }    
 
     // ------------ data manipulations ------------
     this.addNode = function(point) {
@@ -486,6 +472,8 @@ var Visualizer = new function() {
             newNode = {x: point[0], y: point[1], obj: newObject};
             
         this.nodesData.push(newNode);
+        VisLabels.addNode(newNode);
+        
         return newNode;
     }
     this.linkNodeToSelectedNodes = function(node) {
@@ -497,6 +485,8 @@ var Visualizer = new function() {
     this.removeNode = function(node) {
         var i = this.nodesData.indexOf(node);
         if (i >= 0) {
+            VisLabels.removeNode(node, i);
+            
             this.nodesData.splice(i, 1);
             
             for (i = 0; i < this.linksData.length; i++) {
@@ -519,10 +509,4 @@ var Visualizer = new function() {
     this.setNewNodeType = function(newNodeType) {
         this.newNodeType = newNodeType;
     }
-
-    //
-    this.clearFbDetail = function() {
-        this.fbDetail.selectAll('*').remove();
-    }    
-    
 }

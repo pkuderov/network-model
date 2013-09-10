@@ -1,5 +1,5 @@
 var Executor = new function() {
-    this.pauseBetweenTicksInMs = 20;
+    this.pauseBetweenTicksInMs = 50;
     
     //hack to make currentTick == 0 when initialization (at prepareNextTickExectuion())
     this.currentTick = -1;
@@ -21,8 +21,10 @@ var Executor = new function() {
             this.indexToCall++;
         }
         
-        if (this.isTickExecutionDone())
+        if (this.isTickExecutionDone()) {            
+            Visualizer.redraw();
             this.prepareNextTickExectuion();
+        }
         else
             this.indexToCall++;
     }
@@ -32,6 +34,7 @@ var Executor = new function() {
             this.indexToCall++;
         }
         
+        Visualizer.redraw();
         this.prepareNextTickExectuion();
     }
     this.isPaused = function() {

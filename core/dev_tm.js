@@ -7,7 +7,7 @@ var TransMedium = function(ticksToTransfer) {
     this.directions = {};
 
     if (ticksToTransfer == undefined)
-        this.ticksToTransfer = 1;
+        this.ticksToTransfer = 5;
     else    
         this.ticksToTransfer = ticksToTransfer;
 
@@ -95,7 +95,7 @@ var TransMediumDirection = function(owner, fromPort, toPort) {
     }
     this.getFrameDeliveryPercent = function() {
         if (this.busy) {
-            return (Executor.currentTick - this.transferStartTick) / (this.owner.ticksToTransfer + this.ticksToFlushPortsBuffer);
+            return Math.min(1, (Executor.currentTick - this.transferStartTick) / (this.owner.ticksToTransfer + this.ticksToFlushPortsBuffer));
         }
     }
     

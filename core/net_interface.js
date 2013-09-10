@@ -61,13 +61,13 @@ var NetIface = function(owner, lowerObject, mac) {
 	    //get index to delete
 	    var i;
 	    var network;
-        for(i = 0; i < addresses.length; i++) {
-            if (ip == addresses[i].ip) { 
-			    network = getCanonicalIp(ip, addresses[i].netmask);
+        for(i = 0; i < this.addresses.length; i++) {
+            if (ip == this.addresses[i].ip) { 
+			    network = getCanonicalIp(ip, this.addresses[i].netmask);
 			    break; 
 		    }
         }
-        if (i == addresses.length) {
+        if (i == this.addresses.length) {
 		    logf(this, "ip %s doesn't exist", this.objectTypeName, ipIntToString(ip));
 		    return;
 	    }
@@ -79,25 +79,23 @@ var NetIface = function(owner, lowerObject, mac) {
 			    networksCount ++;
 	    });
 	
-	    if (networksCount > 1) {
+	    if (networksCount == 1) {
 		    //delete default route for the network
 		    var canonicalIp = network;
-		    var netmask = addresses[i].netmask;
+		    var netmask = this.addresses[i].netmask;
 		    if (this.owner.routingTable.routeExists(canonicalIp, netmask, this.owner.routingTable.zeroGateway, this)) {
-            	this.owner.routingTable.removeRoute(
-                    canonicalIp, netmask, this.owner.routingTable.zeroGateway, this
-			    );
+            	this.owner.routingTable.removeRoute(canonicalIp, netmask, this.owner.routingTable.zeroGateway, this);
         	}
 	    }
 	
 	    //delete ip record from addresses
-	    addresses.splice(i, 1);
+	    this.addresses.splice(i, 1);
     }
     this.removeAllIp = function() {
         this.addresses.forEach(function(pair) {
             this.removeIp(pair.ip);
         });
-    }    
+    }        
 }
 
 var LoopbackNetIface = function(owner) {

@@ -124,9 +124,17 @@ function objToString (obj, maxDepth) {
 function ipStringToInt(ipStr) 
 {
     var ipInt = 0; 
-    ipStr.split('.').forEach(function(x) {
-        ipInt = ipInt * 256 + (+x);
-    });
+    var arr = ipStr.split('.');
+    if (arr.length > 4)
+        return { errMsg: "ip address isn't valid" };
+        
+    for (var i = 0; i < arr.length; i++ ) {
+        var tx = (+arr[i]);
+        if (!(tx >= 0 && tx <= 255))
+            return { errMsg: "ip address isn't valid" };
+            
+        ipInt = ipInt * 256 + tx;
+    }
     return ipInt;
 }
 
@@ -157,6 +165,9 @@ function floorLog2(x) {
     return Math.floor(Math.log(x) / lnFrom2);
 }
 function netmaskShortToFull(short) {
+    if (!(short >= 0 && short <= 32))
+        return { errMsg: "netmask isn't valid" };
+        
     return ipFullNetmask - getMask(32 - short);
 }
 function netmaskFullToShort(full) {
@@ -174,6 +185,21 @@ function getBroadcastIp(ip, netmask) {
 
 function isZeroNetwork(ip, netmask) {
     return 0 == getCanonicalIp(ip, netmask)
+}
+
+function addressObjToString(addressObj) {
+    return sprintf("%s/%d", ipIntToString(addressObj.ip), netmaskFullToShort(addressObj.netmask));
+}
+function addressStringToObj(addressStr) {
+    var t = addressStr.split('/');
+    var ipInt = ipStringToInt(t[0]);
+    if (ipInt.errMsg)
+        return ipInt;
+    var netmaskFull = netmaskShortToFull((+t[1]));
+    if (netmaskFull.errMsg)
+        return netmaskFull;
+    
+    return { ip: ipInt, netmask: netmaskFull };
 }
 
 // clone 'simple' object by value

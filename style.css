@@ -98,6 +98,13 @@ div.fbox  {
     fill: none
 }
 
+.label {
+    font-size: 12px;
+} 
+
+.message {
+}
+
 /* dropdown menu hack */
 div.dropdown-wrapper {
     padding: 0;
@@ -138,8 +145,10 @@ li.dropdown-item {
 }
 
 /* other staff */
-.inputIpNetmask {
-    width: 120px;
+.input-text {
+    border: 2px solid #DEDEDE;
+    border-radius: 3;
+    background: transparent;
 }
 
 /*

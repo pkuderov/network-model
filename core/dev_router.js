@@ -121,7 +121,7 @@ var RoutingTable = function(owner) {
             logf(this, "route {%s/%d %s %s} doesn't exist", ipIntToString(ip), netmaskFullToShort(netmask), ipIntToString(gateway), netIface.getObjectName());
             return;
         }
-        table.splice(i, 1);
+        this.table.splice(i, 1);
     }
     this.getPath = function(dstIp) {
         //return gatewayIp/localIp + netIface
