@@ -236,10 +236,11 @@ function clone(obj) {
 }
 
 //queue object
-var Queue = function(owner, queueName, size) {
+var Queue = function(owner, queueName, size, autoShrink) {
     this.owner = owner;
     this.queueName = queueName;
     this.array = new Array(size);
+    this.autoShrink = autoShrink;
 	
     //methods
 	this.clear = function() {
@@ -247,6 +248,10 @@ var Queue = function(owner, queueName, size) {
 	    this.bottom = 0;
 	    this.count = 0;
     };
+    this.deepClear = function() {
+        this.compact(this, function() { return false; });
+        this.clear();
+    }
     this.isEmpty = function() {
         return this.count == 0;
     }
@@ -263,7 +268,13 @@ var Queue = function(owner, queueName, size) {
     };
     this.push = function(obj) {
         if (this.isFull()) {
-            logf(this.owner, "%s is full => object won't be pushed", this.queueName);
+            if (this.autoShrink) {
+                this.shrinkQueue();
+                this.push(obj);
+            }
+            else
+                logf(this.owner, "%s is full => object won't be pushed", this.queueName);
+                
             return;
         }
 
@@ -318,7 +329,7 @@ var Queue = function(owner, queueName, size) {
         var comparer = function(x) {
             return x != index;
         }
-        this.compact(this, comparer);
+        return this.compact(this, comparer);
     }
     
     this.toString = function() {
@@ -327,6 +338,17 @@ var Queue = function(owner, queueName, size) {
             str += objToString(this.getItem(i), 2);
         }
         return str;
+    }
+    this.shrinkQueue = function() {
+        var array = new Array(this.array.length * 2);
+                
+        for (var i = 0; i < this.count; i ++ ) {
+            array[i] = this.getItem(i);
+        }
+        
+        this.array = array;
+        this.bottom = 0;
+        this.top = this.count;
     }
     
     //initialization

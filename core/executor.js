@@ -22,7 +22,7 @@ var Executor = new function() {
         }
         
         if (this.isTickExecutionDone()) {            
-            Visualizer.redraw();
+            Visualizer.redrawMessages();
             this.prepareNextTickExectuion();
         }
         else
@@ -34,7 +34,7 @@ var Executor = new function() {
             this.indexToCall++;
         }
         
-        Visualizer.redraw();
+        Visualizer.redrawMessages();
         this.prepareNextTickExectuion();
     }
     this.isPaused = function() {

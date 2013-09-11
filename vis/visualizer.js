@@ -88,7 +88,7 @@ var Visualizer = new function() {
         this.setEditMode(true);
         this.redraw();
         
-        this.test2();
+        this.test();
     }    
     this.setEditMode = function(isEdit) {            
         if (isEdit) {                
@@ -130,13 +130,7 @@ var Visualizer = new function() {
         VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
     }
     // redraw graph    
-    this.redraw = function() {
-        if (!this.editMode) {
-            this.redrawMessages();
-            VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
-            return;
-        }
-        
+    this.redraw = function() {        
         // links
         this.link = this.link.data(this.linksData, function(d) { return Visualizer.linksData.indexOf(d); });
         this.link.enter().insert('line', '.node')
@@ -206,11 +200,16 @@ var Visualizer = new function() {
             }
         }
         var r = this.radius;
-        
         this.gVisibleContainer.selectAll('.message').remove();
+        
+        if (messages.length == 0)
+            return;
+            
+        this.redraw();
+        
         this.gVisibleContainer.selectAll('.message').data(messages).enter().insert('circle')
             .attr('class', 'message')
-            .attr('r', 2)
+            .attr('r', 3)
             .attr('fill', 'red')
             .each(function(d) {
                     var dx = d.target.x - d.source.x;
@@ -227,6 +226,7 @@ var Visualizer = new function() {
         for (var i = 0; i < 7; i++) {
             this.selectedNodes.push(this.addNode(point));
         }
+        this.setNewNodeType('switch');
         var last = this.addNode(point);
         this.linkNodeToSelectedNodes(last);
         this.selectedNodes = [last];        

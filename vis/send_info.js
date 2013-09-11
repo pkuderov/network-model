@@ -119,13 +119,13 @@ var SendInfo = new function() {
         var ip = d.obj;
         VisInfo.selectDropdownItem(container, ipIntToString(ip)); 
         
-        if (container == SendInfo.dropdownFromHost) {
+        if (container == SendInfo.sendFieldset.dropdownFromHost) {
             SendInfo.sendFieldset.inputFromIp
-                .text('fromIp', ip);
+                .attr('value', ipIntToString(ip));
         }
         else {
-            SendInfo.sendFieldset.btnSend
-                .property('toIp', ip);
+            SendInfo.sendFieldset.inputToIp
+                .attr('value', ipIntToString(ip));
         }
     }
     this.hSend = function() {
