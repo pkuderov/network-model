@@ -334,6 +334,13 @@ var Visualizer = new function() {
     }
     this.hKeyUp = function() {
         //log("%d", d3.event.keyCode);
+        var target = d3.event.target;
+        if (target == null)
+            target = d3.event.srcElement;
+            
+        if (target != null && target.type == 'text')
+            return;
+            
         switch (d3.event.keyCode) {
             case 17: { // ctrl
                 Visualizer.removeSelectionRectangle();
@@ -389,6 +396,8 @@ var Visualizer = new function() {
     // ------------- zoom ---------------
     this.enableZoom = function() {
         //restore zoom state
+        if (this.savedZoom.translate == null)
+            return;
 
         //log('zoom enabled');
         this.zoom

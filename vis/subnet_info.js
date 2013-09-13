@@ -105,47 +105,62 @@ var SubnetInfo = new function() {
         var toColor = hosts.length;
         for (var i = 0; i < Visualizer.nodesData.length; i++ ) {
             var node = Visualizer.nodesData[i];
-            color[node.obj.deviceName] = { host: node.obj, c: hosts.indexOf(node.obj) >= 0 ? 1 : 0 };
+            color[node.obj.deviceName] = { host: node.obj, selected: hosts.indexOf(node.obj) >= 0, c: 0 };
         } 
         
         var stack = new Queue(this, 'bfs queue', 25, true);
-        stack.push({ name: hosts[0].deviceName, fromPort: null, toPort: null, prevPort: null });
+        for (var i = 0; i < hosts[0].ports.length; i++ ) {
+            var toPort = hosts[0].ports[i].toSendTMDirection.toPort;
+            
+            stack.push({ 
+                name: toPort.owner.deviceName, 
+                fromPort: hosts[0].ports[i], 
+                toPort: toPort, 
+                prevPort: hosts[0].ports[i] 
+            });
+        }
+        color[hosts[0].deviceName].c = 1;
+        toColor --;
         
         var ports = [];
         
         while (!stack.isEmpty()) {
-            var obj = stack.pop();
-            
-            if (color[obj.name].c == 1) {
-                color[obj.name].c = -1;
-                toColor --;
-            }
-                
-            var c = color[obj.name].c
+            var obj = stack.pop();                                
             var host = color[obj.name].host;
-            if (c != 0) {
-                if (obj.fromPort && !(ports.indexOf(obj.fromPort) >= 0)) ports.push(obj.fromPort);
-                if (obj.toPort && !(ports.indexOf(obj.toPort) >= 0)) ports.push(obj.toPort);
-            }
             
-            for (var i = 0; i < host.ports.length; i++) {
-                var toPort = host.ports[i].toSendTMDirection.toPort;
-                 
-                if (obj.prevPort != toPort) {
-                    stack.push({
-                        name: toPort.owner.deviceName,
-                        fromPort: c == 0 ? obj.fromPort : host.ports[i],
-                        toPort: toPort,
-                        prevPort: host.ports[i]
-                    });
+            if (color[obj.name].c == 0) {                
+                for (var i = 0; i < host.ports.length; i++) {
+                    var toPort = host.ports[i].toSendTMDirection.toPort;
+                     
+                    if (obj.prevPort != toPort) {
+                        stack.push({
+                            name: toPort.owner.deviceName,
+                            fromPort: color[obj.name].selected ? host.ports[i] : obj.fromPort,
+                            toPort: toPort,
+                            prevPort: host.ports[i]
+                        });
+                    }
+                }
+                
+                if (color[obj.name].selected) {
+                    toColor --;
+                    if (obj.fromPort && !(ports.indexOf(obj.fromPort) >= 0)) ports.push(obj.fromPort);
+                    if (obj.toPort && !(ports.indexOf(obj.toPort) >= 0)) ports.push(obj.toPort);
                 }
             }
+            else {                
+                if (obj.fromPort && !(ports.indexOf(obj.fromPort) >= 0)) ports.push(obj.fromPort);
+                if (color[obj.name].selected)
+                    if (obj.toPort && !(ports.indexOf(obj.toPort) >= 0)) ports.push(obj.toPort);                
+            }
+            
+            color[obj.name].c = 1;
         }
         
-        if (toColor != 0)
-            return;
-        
         var netIfaces = [];
+        if (toColor != 0)
+            return netIfaces;
+        
         for (var i = 0; i < ports.length; i++)
             if (ports[i].upperObject instanceof NetIface) netIfaces.push(ports[i].upperObject);
             

@@ -93,7 +93,7 @@ var NetIface = function(owner, lowerObject, mac) {
     }
     this.removeAllIp = function() {
         this.addresses.forEach(function(pair) {
-            this.removeIp(pair.ip);
+            NetIface.removeIp(pair.ip);
         });
     }        
 }

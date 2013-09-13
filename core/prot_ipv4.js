@@ -145,7 +145,7 @@ var IPv4Handler = function(owner) {
             //forward packet
             this.forward(fromNetIface, packet, isBroadcastEthernetFrame);
             
-            //check is packet a network directed broadcast for some of the netIfaces except the one which received this packet [WHICH ALREADY HANDLED, see 'if' blocks above]
+            //check if packet is a network directed broadcast for some of the netIfaces except the one which received this packet [WHICH ALREADY HANDLED, see 'if' blocks above]
             var needToHandleReceivedPacket = false;
             this.owner.netIfaces.forEach(function(netIface) {
                 if (netIface != fromNetIface && IPv4.isBroadcastIpForNetIface(netIface, packet.dstIp)) {
