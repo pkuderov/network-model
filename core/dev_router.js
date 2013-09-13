@@ -20,7 +20,7 @@ var Router = function(name) {
         return sprintf("%s%s", this.objectTypeName, this.deviceName);
     }
     this.getPort = function(i) {
-        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
+        assertf(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
         return this.ports[i];
     }
     this.addPort = function(mac) {
@@ -31,7 +31,7 @@ var Router = function(name) {
         return port;
     }
     this.removePort = function(i) {
-        assert(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
+        assertf(i >= 0 && i < this.ports.length, slogf(this, "port's index is out of bound"));
 //        var netIfaceIndex = this.netIfaces.indexOf(this.ports[i].upperObject);
 //        if (netIfaceIndex >= 0 && netIfaceIndex < this.netIfaces.length)
 //            this.removeNetIface(netIfaceIndex);
@@ -49,7 +49,7 @@ var Router = function(name) {
         return netIface;
     }
     this.removeNetIface = function(i) {
-        assert(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound")); 
+        assertf(i >= 0 && i < this.netIfaces.length, slogf(this, "interface's index is out of bound")); 
         this.netIfaces[i].removeAllIp();
         this.netIfaces.splice(i, 1);
     }

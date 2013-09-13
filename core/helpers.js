@@ -98,6 +98,16 @@ var logf = function() {
 var alert = window.alert;
 var assert = console.assert;
 
+var assert = function() {
+    log('assert');
+    console.assert.apply(this, arguments);
+}
+var assertf = function() {
+    if (!arguments[0]) {
+        console.assert(false, slogf.apply(this, Array.prototype.slice.call(arguments, 1)));
+    }
+}
+
 function objToString (obj, maxDepth) {
     if (maxDepth <= 0)
         return "{ }";
@@ -121,17 +131,26 @@ function objToString (obj, maxDepth) {
 /*
     ip transformation helpers
 */
+function strToInt(str) {
+    var tx = (+str);
+    if (tx == NaN)
+        tx = (+('0x' + str));
+    
+    if (tx == NaN)
+        return;
+    return tx;
+}
 function ipStringToInt(ipStr) 
 {
     var ipInt = 0; 
     var arr = ipStr.split('.');
     if (arr.length > 4)
-        return { errMsg: "ip address isn't valid" };
+        return;
         
     for (var i = 0; i < arr.length; i++ ) {
-        var tx = (+arr[i]);
+        var tx = strToInt(arr[i]);
         if (!(tx >= 0 && tx <= 255))
-            return { errMsg: "ip address isn't valid" };
+            return;
             
         ipInt = ipInt * 256 + tx;
     }
@@ -166,7 +185,7 @@ function floorLog2(x) {
 }
 function netmaskShortToFull(short) {
     if (!(short >= 0 && short <= 32))
-        return { errMsg: "netmask isn't valid" };
+        return;
         
     return ipFullNetmask - getMask(32 - short);
 }
@@ -193,11 +212,11 @@ function addressObjToString(addressObj) {
 function addressStringToObj(addressStr) {
     var t = addressStr.split('/');
     var ipInt = ipStringToInt(t[0]);
-    if (ipInt.errMsg)
-        return ipInt;
+    if (ipInt == null)
+        return;
     var netmaskFull = netmaskShortToFull((+t[1]));
-    if (netmaskFull.errMsg)
-        return netmaskFull;
+    if (netmaskFull == null)
+        return;
     
     return { ip: ipInt, netmask: netmaskFull };
 }
@@ -259,11 +278,11 @@ var Queue = function(owner, queueName, size, autoShrink) {
         return this.count == this.array.length;
     }
     this.getItem = function(i) {
-        assert(i >= 0 && i < this.count, slogf(this.owner, "%s's index is out of bound", this.queueName));
+        assertf(i >= 0 && i < this.count, slogf(this.owner, "%s's index is out of bound", this.queueName));
         return this.array[(this.bottom + i) % this.array.length];
     };
     this.setItem = function(i, value) {
-        assert(i >= 0 && i < this.count, slogf(this.owner, "%s's index is out of bound", this.queueName));
+        assertf(i >= 0 && i < this.count, slogf(this.owner, "%s's index is out of bound", this.queueName));
         return this.array[(this.bottom + i) % this.array.length] = value;
     };
     this.push = function(obj) {
@@ -302,7 +321,7 @@ var Queue = function(owner, queueName, size, autoShrink) {
         return x;
     };
     this.peek = function() {        
-        assert(this.count > 0, slogf(this.owner, "%s's index is out of bound", this.queueName));
+        assertf(this.count > 0, slogf(this.owner, "%s's index is out of bound", this.queueName));
 	    return this.array[this.bottom];
     };
     this.compact = function(obj, comparer) {

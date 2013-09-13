@@ -73,7 +73,7 @@ var UDPDatagram = function(srcPort, dstPort, data) {
         if (typeof(this.data) == "object") {
             size = this.data.getSize();
         } else {
-            assert(typeof(this.data) == "string", "UDPDatagram: unknown type of data")
+            assertf(typeof(this.data) == "string", "UDPDatagram: unknown type of data")
             size = this.data.length;
         }
         return size + UDP.headerSize;

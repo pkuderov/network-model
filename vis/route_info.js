@@ -115,12 +115,12 @@ var RouteInfo = new function() {
         var fieldset = RouteInfo.routeFieldset;
         var address = addressStringToObj(fieldset.inputIpNetmask.property('value'));
         var gateway = ipStringToInt(fieldset.inputGateway.property('value'));
-        var metrics = (+fieldset.inputMetrics.property('value'));
+        var metrics = strToInt(fieldset.inputMetrics.property('value'));
         
-        VisInfo.setAndResetWithDelay(fieldset.inputIpNetmask, 'border-color', (address.errMsg) ? 'red' : 'lightgreen', null, 1000);
-        VisInfo.setAndResetWithDelay(fieldset.inputGateway, 'border-color', (gateway.errMsg) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputIpNetmask, 'border-color', (address == null) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputGateway, 'border-color', (gateway == null) ? 'red' : 'lightgreen', null, 1000);
         
-        if (!address.errMsg && !gateway.errMsg) {
+        if (address != null && gateway != null) {
             RouteInfo.host.routingTable.addRoute(address.ip, address.netmask, gateway, this.netIface, metrics);
             RouteInfo.loadRouteList(this.netIface);
         }

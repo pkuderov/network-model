@@ -28,6 +28,23 @@ var VisLabels = new function() {
             .charge(this.charge)
             .on('tick', this.hForceLayoutTick);
     }
+    this.redrawGraphLabels = function() {
+        // nodes
+        this.label = this.label.data(this.labelsData, function(d) { return VisLabels.labelsData.indexOf(d); });
+        this.label.enter().append('text')
+            .attr('class', 'label')
+            .transition()
+            .duration(750)
+            .text(function(d) { return d.obj.getObjectName(); });
+                       
+        this.label.exit().remove();
+                        
+        this.forceLayout.start();
+    }
+    this.redrawOnSelectionChanged = function() {    
+        this.label
+            .attr('font-weight', function(d) { return (Visualizer.selectedNodes.indexOf(d.node.node) >= 0) ? 'bold' : null; });
+    }
     // redraw graph    
     this.redraw = function() {
         // nodes

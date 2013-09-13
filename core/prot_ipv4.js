@@ -416,7 +416,7 @@ var IPv4Packet = function(srcIp, dstIp, protocolNumber, packetId, fragmentLength
         if (typeof(this.data) == "object") {
             size = this.data.getSize();
         } else {
-            assert(typeof(this.data) == "string", "IPv4Packet: unknown type of data")
+            assertf(typeof(this.data) == "string", "IPv4Packet: unknown type of data")
             size = this.data.length;
         }
         return size + IPv4.headerSize;

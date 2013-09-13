@@ -16,16 +16,17 @@ var SendInfo = new function() {
         var fieldset = container.append('fieldset');
         fieldset.append('legend').text('Send details:');
         
-        var dropdownFromHost = VisInfo.appendDropDown(fieldset, 'Select source IP');
-        if (this.toHost) {
+        if (this.fromHost)
+            var dropdownFromHost = VisInfo.appendDropDown(fieldset, 'Select source IP');
+        if (this.toHost)
             var dropdownToHost = VisInfo.appendDropDown(fieldset, 'Select target IP');
-        }
             
         var inputFromIp = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'Source IP')
             .attr('class', 'input-text')
             .style('width', 100);
+        fieldset.append('span').text('port');
         var inputFromPort = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'port')
@@ -38,6 +39,7 @@ var SendInfo = new function() {
             .attr('placeholder', 'Target IP')
             .attr('class', 'input-text')
             .style('width', 100);
+        fieldset.append('span').text('port');
         var inputToPort = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'port')
@@ -45,24 +47,30 @@ var SendInfo = new function() {
             .attr('value', '8080')
             .style('width', 40);
             
+        fieldset.append('p');
         var inputMessage = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'Message')
             .attr('class', 'input-text');
             
+        fieldset.append('span').text('xTimes');
         var inputXTimes = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'xTimes')
             .attr('class', 'input-text')
             .attr('value', '1')
             .style('width', 50);
+            
+        fieldset.append('br');
+        fieldset.append('span').text('delay');
         var inputTicksDelay = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'Ticks delay')
             .attr('class', 'input-text')
             .attr('value', '1')
-            .style('width', 80);
+            .style('width', 50);
             
+        fieldset.append('p');
         var btnSend = fieldset.append('input')
             .attr('type', 'button')
             .attr('value', 'Send message')
@@ -130,23 +138,43 @@ var SendInfo = new function() {
     }
     this.hSend = function() {
         var fieldset = SendInfo.sendFieldset;
+        var valid = true;
         
         var fromIp = ipStringToInt(fieldset.inputFromIp.property('value')); 
-        var fromPort = (+fieldset.inputFromPort.property('value'));   
+        var fromPort = strToInt(fieldset.inputFromPort.property('value'));   
                 
         var toIp = ipStringToInt(fieldset.inputToIp.property('value'));     
-        var toPort = (+fieldset.inputToPort.property('value')); 
+        var toPort = strToInt(fieldset.inputToPort.property('value')); 
         
         var message = fieldset.inputMessage.property('value');
         
-        var xTimes = (+fieldset.inputXTimes.property('value'));
-        var ticksDelay = (+fieldset.inputTicksDelay.property('value'));
+        var xTimes = strToInt(fieldset.inputXTimes.property('value'));
+        var ticksDelay = strToInt(fieldset.inputTicksDelay.property('value'));
+
+        VisInfo.setAndResetWithDelay(fieldset.inputFromIp, 'border-color', (null == fromIp) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputFromPort, 'border-color', (null == fromPort) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputToIp, 'border-color', (null == toIp) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputToPort, 'border-color', (null == toPort) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputXTimes, 'border-color', (null == xTimes) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(fieldset.inputTicksDelay, 'border-color', (null == ticksDelay) ? 'red' : 'lightgreen', null, 1000);
+
+        valid = valid && (null != fromIp);
+        valid = valid && (null != fromPort);
+        valid = valid && (null != toIp);
+        valid = valid && (null != toPort);
+        valid = valid && (null != xTimes);
+        valid = valid && (null != ticksDelay);
         
-        VisInfo.setAndResetWithDelay(fieldset.inputFromIp, 'border-color', (fromIp.errMsg) ? 'red' : 'lightgreen', null, 1000);
-        VisInfo.setAndResetWithDelay(fieldset.inputToIp, 'border-color', (toIp.errMsg) ? 'red' : 'lightgreen', null, 1000);
-        
-        if (!fromIp.errMsg && !toPort.errMsg) {
-            SendInfo.fromHost.protocolHandlers.UDP.send(fromIp, fromPort, toIp, toPort, message);
+        if (valid) {
+            for (var i = 0; i < xTimes; i++) {
+                var msDelay = i * ticksDelay;
+                Executor.addJob(
+                    function() {
+                        SendInfo.fromHost.protocolHandlers.UDP.send(fromIp, fromPort, toIp, toPort, message);
+                    },
+                    msDelay
+                );
+            }
         }
     }
     this.hMouseEnterDropdownItem = function(d) {

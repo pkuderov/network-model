@@ -2,7 +2,7 @@ var VisInfo = new function() {
     this.colorDisabled = '#DEDEDE';
         
     this.showDetails = function(editMode, nodes, links) {
-        Visualizer.clearFbDetail();
+        Visualizer.fbDetail.selectAll('*').remove();
         
         if (editMode) {
             if (nodes.length == 1) {
@@ -13,11 +13,18 @@ var VisInfo = new function() {
                     RouteInfo.showRouteDetails(host);
                 }
             }
+            else if (nodes.length > 1) {
+                var hosts = [];
+                for (var i = 0; i < nodes.length; i++) {
+                    hosts.push(nodes[i].obj);
+                }
+                SubnetInfo.showSubnetDetails(hosts);
+            }
         }
         else {
             if (nodes.length <= 2) {
-                var fromHost = nodes.length >= 1 ? nodes[0].obj : null;
-                var toHost = nodes.length >= 2 ? nodes[1].obj : null;
+                var fromHost = nodes.length >= 1 && nodes[0].obj instanceof Router ? nodes[0].obj : null;
+                var toHost = nodes.length >= 2 && nodes[1].obj instanceof Router ? nodes[1].obj : null;                
                 SendInfo.showSendDetails(fromHost, toHost);
             }
         }

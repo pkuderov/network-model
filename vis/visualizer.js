@@ -86,7 +86,7 @@ var Visualizer = new function() {
             
         
         this.setEditMode(true);
-        this.redraw();
+        this.redrawGraph();
         
         this.test();
     }    
@@ -103,13 +103,12 @@ var Visualizer = new function() {
         }
         else {
             var buttons = [
-                { text: 'play', onClick: "Executor.play()" },
-                { text: 'pause', onClick: "Executor.pause()" },
-                { text: 'step', onClick: "Executor.stepForward()" },
+                { text: 'play', onClick: "Visualizer.switchState()", id: 'btnSwitchState' },
+                { text: 'step', onClick: "Visualizer.stepForward()" },
+                { placeholder: 'tick rate', type: 'text', id: 'executorRate' },
+                { text: 'set rate', onClick: "Visualizer.setExecutorRate()" },
                 { text: 'edit', onClick: "Visualizer.setEditMode(true)" , id: 'btnEditMode'}
-            ];            
-            
-            this.forceLayout.stop();
+            ];
         }
         
         d3.select('.fbManage')
@@ -119,19 +118,22 @@ var Visualizer = new function() {
         d3.select('.fbManage').selectAll('input').data(buttons)
             .enter()
             .insert('input')
-            .attr('type', 'button')
+            .attr('type', function(d) {return d.type ? d.type : 'button'; })
             .attr('value', function(d) { return d.text; })
             .attr('id', function(d) { return d.id; })
+            .attr('placeholder', function(d) { return d.placeholder; })
             .attr('onClick', function(d) {return d.onClick; });
             
-        this.clearFbDetail();
+        d3.select('.fbManage').select('#executorRate')
+            .style('width', 50)
+            .attr('value', Executor.pauseBetweenTicksInMs);
+            
         this.editMode = isEdit;
         
-        VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
+        this.redrawDetails();
     }
-    // redraw graph    
-    this.redraw = function() {        
-        // links
+    this.redrawGraph = function() {
+    
         this.link = this.link.data(this.linksData, function(d) { return Visualizer.linksData.indexOf(d); });
         this.link.enter().insert('line', '.node')
             .attr('class', 'link')
@@ -142,8 +144,6 @@ var Visualizer = new function() {
                    
         this.link.exit()
             .remove();
-            
-        this.link.classed('selected', function(d) { return Visualizer.selectedLinks.indexOf(d) >= 0; });
             
         // nodes
         this.node = this.node.data(this.nodesData, function(d) { return Visualizer.nodesData.indexOf(d); });
@@ -165,17 +165,25 @@ var Visualizer = new function() {
             .duration(500)
             .attr('r', 0)
             .remove();
-                        
-        this.node.classed('selected', function(d) { return Visualizer.selectedNodes.indexOf(d) >= 0; });
-        
-        VisLabels.redraw();
+                                
+        VisLabels.redrawGraphLabels();
         
         if (d3.event) {
             // prevent browser's default behavior
             d3.event.preventDefault();
         }
-        this.forceLayout.start();
         
+        this.forceLayout.start();
+    }
+    this.redrawOnSelectionChanged = function() {
+        this.link.classed('selected', function(d) { return Visualizer.selectedLinks.indexOf(d) >= 0; });
+        this.node.classed('selected', function(d) { return Visualizer.selectedNodes.indexOf(d) >= 0; });
+        
+        VisLabels.redrawOnSelectionChanged();
+        
+        this.redrawDetails();
+    }
+    this.redrawDetails = function() {
         VisInfo.showDetails(this.editMode, this.selectedNodes, this.selectedLinks);
     }
     this.redrawMessages = function() {
@@ -204,8 +212,6 @@ var Visualizer = new function() {
         
         if (messages.length == 0)
             return;
-            
-        this.redraw();
         
         this.gVisibleContainer.selectAll('.message').data(messages).enter().insert('circle')
             .attr('class', 'message')
@@ -229,13 +235,12 @@ var Visualizer = new function() {
         this.setNewNodeType('switch');
         var last = this.addNode(point);
         this.linkNodeToSelectedNodes(last);
-        this.selectedNodes = [last];        
-        this.redraw();
+        this.setSelection([last]);
     }
     this.test2 = function() {
         var point = [0, 0];
         var x = this.addNode(point);
-        this.selectedNodes.push(x);
+        this.setSelection([x]);
         var y = this.addNode(point);
         
         this.linkNodeToSelectedNodes(y);
@@ -245,8 +250,6 @@ var Visualizer = new function() {
         x.obj.protocolHandlers.UDP.send(ipStringToInt('192.168.55.212'), 8080, ipStringToInt('192.168.55.211'), 8090, 
 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         );
-        
-        this.redraw();
     }
     // EVENT HANDLERS ------------------
     this.hRescale = function() {
@@ -258,18 +261,16 @@ var Visualizer = new function() {
             if (d3.event.shiftKey) {
                 // + shift: add node + link to selected nodes
                 Visualizer.linkNodeToSelectedNodes(Visualizer.addNode(d3.mouse(this)));
-                Visualizer.resetSelection();
+                Visualizer.setSelection();
             }
             else if (d3.event.ctrlKey) {
                 Visualizer.createSelectionRectangle(d3.mouse(this));
                 Visualizer.disableZoom();
             }
             else {
-                Visualizer.resetSelection();
+                Visualizer.setSelection();
             }
-        }
-        
-        Visualizer.redraw();
+        }        
     }
     this.hMouseDrag = function() {
         var point = d3.mouse(Visualizer.gVisibleContainer.node());
@@ -291,28 +292,21 @@ var Visualizer = new function() {
             Visualizer.selectAreaOfNodes();
             Visualizer.removeSelectionRectangle();
             Visualizer.enableZoom();
-            Visualizer.redraw();
         }        
     }    
     this.hMouseDownOnLink = function(d) {
         if (d3.event.button == 0) {
             if (d3.event.ctrlKey) {
                 // + ctrl : additive select/deselect
-                var ind = Visualizer.selectedLinks.indexOf(d);
-                if (ind >= 0)
-                    Visualizer.selectedLinks.splice(ind, 1);
-                else
-                    Visualizer.selectedLinks.push(d);
+                Visualizer.xorAddToSelection(null, [d]);
             }
             else {
                 // + no modifiers
-                Visualizer.resetSelection();
-                Visualizer.selectedLinks = [d];
+                Visualizer.setSelection(null, [d]);
             }     
             
             Visualizer.mouseDownLink = d;
             Visualizer.disableZoom();
-            Visualizer.redraw();
         }
         d3.event.stopPropagation();
     }
@@ -321,27 +315,20 @@ var Visualizer = new function() {
             // left button
             if (d3.event.ctrlKey) {
                 // + ctrl : additive select/deselect
-                var ind = Visualizer.selectedNodes.indexOf(d);
-                if (ind >= 0)
-                    Visualizer.selectedNodes.splice(ind, 1);
-                else
-                    Visualizer.selectedNodes.push(d);
+                Visualizer.xorAddToSelection([d]);
             }
             else if (d3.event.shiftKey) {
                 // + shift : link this node with every selected node
                 Visualizer.linkNodeToSelectedNodes(d);
-                Visualizer.resetSelection();
-                Visualizer.selectedNodes = [d];
+                Visualizer.setSelection([d]);
             }
             else {
                 // + no modifiers
-                Visualizer.resetSelection();
-                Visualizer.selectedNodes = [d];
+                Visualizer.setSelection([d], null);
             }            
             
             Visualizer.mouseDownNode = d;   
-            Visualizer.disableZoom();         
-            Visualizer.redraw();
+            Visualizer.disableZoom();
         }
         d3.event.stopPropagation();
     }
@@ -359,9 +346,8 @@ var Visualizer = new function() {
                 Visualizer.selectedNodes.forEach(function(d) {
                     Visualizer.removeNode(d);
                 });
-                Visualizer.resetSelection();
+                Visualizer.setSelection();
                 Visualizer.enableZoom();
-                Visualizer.redraw();
                 break;
             }
         }
@@ -428,7 +414,6 @@ var Visualizer = new function() {
 
     // ----------- selection area & selections ----------
     this.selectAreaOfNodes = function() {
-        log('find me');
         var svgRect = this.gVisibleContainer.select('.rectSelection'),
             r = this.radius,
             rect = { 
@@ -436,9 +421,11 @@ var Visualizer = new function() {
                 y1: +svgRect.attr('y') - r, y2 : (+svgRect.attr('y') + (+svgRect.attr('height')) + r)
             };
             
-        this.selectedNodes = this.nodesData.filter(function(d) { 
-                return d.x >= rect.x1 && d.x <= rect.x2 && d.y >= rect.y1 && d.y <= rect.y2; 
-            });
+        
+        var toSelect = this.nodesData.filter(function(d) { 
+            return d.x >= rect.x1 && d.x <= rect.x2 && d.y >= rect.y1 && d.y <= rect.y2; 
+        });
+        this.setSelection(toSelect, null);
     }
     this.createSelectionRectangle = function(point) {        
         this.gVisibleContainer.append('rect')
@@ -456,15 +443,37 @@ var Visualizer = new function() {
             Visualizer.selectionRectangle = null;
         }
     }
-    this.resetSelection = function() {
-        this.selectedNodes = [];
-        this.selectedLinks = [];
-        this.clearFbDetail();
+    this.setSelection = function(nodes, links) {
+        this.selectedNodes = (nodes) ? nodes : [];
+        this.selectedLinks = (links) ? links : [];
+        
+        this.redrawOnSelectionChanged();
     }
-    //
-    this.clearFbDetail = function() {
-        this.fbDetail.selectAll('*').remove();
-    }    
+    this.xorAddToSelection = function(nodes, links) {
+        if (nodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var ind = this.selectedNodes.indexOf(node);
+                if (ind >= 0)
+                    this.selectedNodes.splice(ind, 1);
+                else
+                    this.selectedNodes.push(node);
+            }
+        }
+        
+        if (links) {
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                var i = this.selectedLinks.indexOf(link);
+                if (i >= 0)
+                    this.selectedLinks.splice(i, 1);
+                else
+                    this.selectedLinks.push(link);
+            }
+        }
+            
+        this.redrawOnSelectionChanged();
+    }
 
     // ------------ data manipulations ------------
     this.addNode = function(point) {
@@ -474,6 +483,8 @@ var Visualizer = new function() {
         this.nodesData.push(newNode);
         VisLabels.addNode(newNode);
         
+        this.redrawGraph();
+        
         return newNode;
     }
     this.linkNodeToSelectedNodes = function(node) {
@@ -481,6 +492,8 @@ var Visualizer = new function() {
             var tm = Environment.connectObjects(d.obj, node.obj);
             Visualizer.linksData.push({source: d, target: node, tm: tm});
         });
+        
+        this.redrawGraph();
     }       
     this.removeNode = function(node) {
         var i = this.nodesData.indexOf(node);
@@ -497,6 +510,8 @@ var Visualizer = new function() {
                 }
             }            
             Environment.removeObject(node.obj);
+            
+            this.redrawGraph();
         }
     }
     this.removeLink = function(link) {
@@ -504,9 +519,38 @@ var Visualizer = new function() {
         if (i >= 0) {
             this.linksData.splice(i, 1);            
             Environment.removeObject(link.tm);
+            
+            this.redrawGraph();
         }
     }
     this.setNewNodeType = function(newNodeType) {
         this.newNodeType = newNodeType;
+    }
+    this.switchState = function() {
+        var button = d3.select('.fbManage').select('#btnSwitchState');
+        
+        if (Executor.isPaused()) {
+            button.property('value', 'pause');
+            Executor.play();
+        }
+        else {
+            button.property('value', 'play');
+            Executor.pause();
+        }
+    }
+    this.stepForward = function() {
+        if (!Executor.isPaused())
+            this.switchState();
+            
+        Executor.stepForward();
+    }
+    this.setExecutorRate = function() {
+        var input = d3.select('.fbManage').select('#executorRate');
+        var rate = strToInt(input.property('value'));        
+        var valid = rate != null && rate > 5;
+        
+        VisInfo.setAndResetWithDelay(input, 'border-color', (!valid) ? 'red' : 'lightgreen', null, 1000);
+        if (valid)
+            Executor.pauseBetweenTicksInMs = rate;
     }
 }

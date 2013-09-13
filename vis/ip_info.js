@@ -85,9 +85,9 @@ var IpInfo = new function() {
         var input = IpInfo.ipFieldset.inputIpNetmask;
         var address = addressStringToObj(input.property('value'));
         
-        VisInfo.setAndResetWithDelay(input, 'border-color', (address.errMsg) ? 'red' : 'lightgreen', null, 1000);
+        VisInfo.setAndResetWithDelay(input, 'border-color', (address == null) ? 'red' : 'lightgreen', null, 1000);
         
-        if (!address.errMsg) {
+        if (address != null) {
             this.netIface.addIp(address.ip, address.netmask);
             IpInfo.loadIpList(this.netIface);
         }

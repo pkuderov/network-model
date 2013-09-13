@@ -93,7 +93,7 @@ EthernetFrame = function(srcMac, dstMac, etherType, data) {
         if (typeof(this.data) == "object") {
             size = this.data.getSize();
         } else {
-            assert(typeof(this.data) == "string", "EthernetFrame: unknown type of data")
+            assertf(typeof(this.data) == "string", "EthernetFrame: unknown type of data")
             size = this.data.length;
         }
         return size + Ethernet.headerSize;

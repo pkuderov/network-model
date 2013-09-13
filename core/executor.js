@@ -1,14 +1,19 @@
 var Executor = new function() {
-    this.pauseBetweenTicksInMs = 50;
+    this.pauseBetweenTicksInMs = 100;
     
     //hack to make currentTick == 0 when initialization (at prepareNextTickExectuion())
     this.currentTick = -1;
-     
+    
+    this.objectTypeName = 'Executor'; 
     this.indexToCall = 0;
     this.timerId;
-    this.activeObjects;
+    this.jobs = new Queue(this, 'jobs queue', 25, true);
+    this.activeObjects = [];
     
     //methods
+    this.getObjectName = function() {
+        return this.objectTypeName;
+    }
     this.isTickExecutionDone = function() {
         return this.indexToCall == this.activeObjects.length;
     }    
@@ -17,6 +22,8 @@ var Executor = new function() {
     }
     //cannot be paused during this method execution
     this.doElementaryActionsUntilValuableOrTickDone = function() {    
+        this.runJobs();
+        
         while (!this.isTickExecutionDone() && !this.invokeCurrentActiveObject()) {
             this.indexToCall++;
         }
@@ -28,7 +35,9 @@ var Executor = new function() {
         else
             this.indexToCall++;
     }
-    this.doTickUntilDone = function() {
+    this.doTickUntilDone = function() {    
+        this.runJobs();
+        
         while (!this.isTickExecutionDone()) {
             this.invokeCurrentActiveObject();
             this.indexToCall++;
@@ -53,7 +62,7 @@ var Executor = new function() {
     }
     this.play = function() {
         if (this.isPaused()) {
-            this.timerId = window.setInterval("Executor.doTickUntilDone()", this.pauseBetweenTicksInMs);
+            this.timerId = window.setInterval(function() { Executor.doTickUntilDone(); }, this.pauseBetweenTicksInMs);
         }
     }
     this.prepareNextTickExectuion = function() {    
@@ -61,8 +70,20 @@ var Executor = new function() {
         this.activeObjects = Environment.getActiveElementaryObjects();
         
         this.currentTick ++;
-        if ((this.currentTick % (1000 / this.pauseBetweenTicksInMs)) == 0)
+        if ((this.currentTick % Math.floor(5000 / this.pauseBetweenTicksInMs)) == 0)
             log('vtime:      %s', this.currentTick);
+    }
+    this.addJob = function(func, runTickDelay) {
+        this.jobs.push({ func: func, runTick: (this.currentTick + runTickDelay) });
+    }
+    this.runJobs = function() {        
+        while (!this.jobs.isEmpty()) {
+            if (this.jobs.peek().runTick > this.currentTick)
+                break;
+            
+            var job = this.jobs.pop();
+            job.func();
+        }
     }
     
     //initialization
