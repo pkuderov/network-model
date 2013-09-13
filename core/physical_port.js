@@ -30,7 +30,7 @@ var PhysicalPort = function(owner, index, upperObject) {
     this.setTMDirectionToSend = function(toSendTMDirection) {
         this.toSendTMDirection = toSendTMDirection;
     }
-    this.unsetTMDirectionToSend = function(toSendTMDirection) {
+    this.unsetTMDirectionToSend = function() {
         this.toSendTMDirection = null;
     }    
     this.receive = function(frame) {

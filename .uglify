@@ -1,0 +1,24 @@
+uglifyjs ^
+core/helpers.js ^
+core/environment.js ^
+core/executor.js ^
+core/dev_tm.js ^
+core/physical_port.js ^
+core/net_interface.js ^
+core/prot_ethernet.js ^
+core/prot_arp.js ^
+core/prot_ipv4.js ^
+core/prot_udp.js ^
+core/dev_switch.js ^
+core/dev_router.js ^
+core/dev_host.js ^
+-o network-model-core.js -b & ^
+uglifyjs ^
+vis/visualizer.js ^
+vis/vis_info.js ^
+vis/ip_info.js ^
+vis/route_info.js ^
+vis/send_info.js ^
+vis/subnet_info.js ^
+vis/vis_labels.js ^
+-o network-model-vis.js -b
