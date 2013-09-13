@@ -102,7 +102,7 @@ var IpInfo = new function() {
     this.hMouseEnterDropdownItem = function(netIface) {
         if (netIface instanceof LoopbackNetIface)
             return;
-        VisInfo.markLinkByColor(netIface.lowerObject.toSendTMDirection.owner, 'green');
+        VisInfo.markLinkByColor(netIface.lowerObject.toSendTMDirection.owner, 'lightgreen');
     }    
     this.hMouseLeaveDropdownItem = function(netIface) {
         if (netIface instanceof LoopbackNetIface)

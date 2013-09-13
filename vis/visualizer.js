@@ -88,14 +88,14 @@ var Visualizer = new function() {
         this.setEditMode(true);
         this.redrawGraph();
         
-        this.test();
+        //this.test();
     }    
     this.setEditMode = function(isEdit) {            
         if (isEdit) {                
             var buttons = [
-                { text: 'host', onClick: "Visualizer.setNewNodeType('host')" },
-                { text: 'router', onClick: "Visualizer.setNewNodeType('router')" },
-                { text: 'switch', onClick: "Visualizer.setNewNodeType('switch')" },
+                { text: 'host', onClick: "Visualizer.setNewNodeType('host')" , class: 'new-node-type'},
+                { text: 'router', onClick: "Visualizer.setNewNodeType('router')", class: 'new-node-type' },
+                { text: 'switch', onClick: "Visualizer.setNewNodeType('switch')", class: 'new-node-type' },
                 { text: 'freeze', onClick: "Visualizer.setEditMode(false)" , id: 'btnEditMode'}
             ];            
                     

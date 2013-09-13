@@ -26,7 +26,7 @@ var RouteInfo = new function() {
             .attr('disabled', 'disabled');
             
         fieldset.append('p')
-            .text('Type ip/netmask, gateway ip and metrics');
+            .text('Type canonical ip/netmask, gateway ip and metrics');
             
         var inputIpNetmask = fieldset.append('input')
             .attr('type', 'text')
