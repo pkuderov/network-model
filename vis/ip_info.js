@@ -22,6 +22,8 @@ var IpInfo = new function() {
             .attr('type', 'button')
             .attr('value', 'Remove IP')
             .attr('disabled', 'disabled');
+
+        fieldset.append('p');
         var inputIpNetmask = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'X.X.X.X/netmask')
