@@ -76,13 +76,12 @@ var Executor = new function() {
     this.addJob = function(func, runTickDelay) {
         this.jobs.push({ func: func, runTick: (this.currentTick + runTickDelay) });
     }
-    this.runJobs = function() {        
-        while (!this.jobs.isEmpty()) {
-            if (this.jobs.peek().runTick > this.currentTick)
-                break;
-            
-            var job = this.jobs.pop();
-            job.func();
+    this.runJobs = function() {
+        var jobsToRun = this.jobs.compact(this, function (x) { return x.runTick > this.currentTick; });
+        if (jobsToRun) {            
+            for (var i = 0; i < jobsToRun.length; i++) {
+                jobsToRun[i].func();
+            }
         }
     }
     

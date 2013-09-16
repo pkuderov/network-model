@@ -326,12 +326,16 @@ var Queue = function(owner, queueName, size, autoShrink) {
     };
     this.compact = function(obj, comparer) {
         var j = 0;
+        var removed = [];
         for(var i = 0; i < this.count; i++) {
             var x = this.getItem(i);
             if (comparer.call(obj, x)) {
                 this.setItem(j, x);
                 j++;
             }
+            else {
+                removed.push(x);
+            }  
         }
         
         var compactSuccessed = j < this.count;        
@@ -342,7 +346,7 @@ var Queue = function(owner, queueName, size, autoShrink) {
         this.top = (this.bottom + j) % this.array.length;
         this.count = j;
 
-        return compactSuccessed;
+        return removed.length > 0 ? removed : null;
     }
     this.removeFrom = function(index) {
         var comparer = function(x) {
