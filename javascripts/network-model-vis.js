@@ -706,6 +706,8 @@ var SendInfo = new function() {
             return d.str;
         }).style("font-weight", function(d) {
             return d.obj instanceof NetIface ? "bold" : null;
+        }).style("background-color", function(d) {
+            return d.obj instanceof NetIface ? "whitesmoke" : null;
         });
         container.item.exit().remove();
         if (items.length == 0) VisInfo.setDisabledColor(container.pOutput, VisInfo.colorDisabled); else VisInfo.setDisabledColor(container.pOutput, null);
@@ -744,10 +746,11 @@ var SendInfo = new function() {
         valid = valid && null != xTimes;
         valid = valid && null != ticksDelay;
         if (valid) {
+            var fromHost = SendInfo.fromHost;
             for (var i = 0; i < xTimes; i++) {
                 var msDelay = i * ticksDelay;
                 Executor.addJob(function() {
-                    SendInfo.fromHost.protocolHandlers.UDP.send(fromIp, fromPort, toIp, toPort, message);
+                    Environment.sendTo(fromHost, fromIp, fromPort, toIp, toPort, message);
                 }, msDelay);
             }
         }
