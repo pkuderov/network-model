@@ -435,8 +435,10 @@ var Environment = new function() {
         }
         this.connectPorts(router.getPort(router.ports.length - 1), sw.getPort(hostsCount), tms[hostsCount]);
     };
-    this.sendTo = function(objectType, hostIndexFrom, srcIp, srcPort, dstIp, dstPort, message) {
-        Environment.objects[objectType][hostIndexFrom].protocolHandlers.UDP.send(ipStringToInt(srcIp), srcPort, ipStringToInt(dstIp), dstPort, message);
+    this.sendTo = function(fromHost, srcIp, srcPort, dstIp, dstPort, message) {
+        if (Environment.objects["host"].indexOf(fromHost) >= 0) {
+            fromHost.protocolHandlers.UDP.send(srcIp, srcPort, dstIp, dstPort, message);
+        }
     };
 }();
 
