@@ -26,7 +26,7 @@ var SendInfo = new function() {
             .attr('placeholder', 'Source IP')
             .attr('class', 'input-text')
             .style('width', 100);
-        fieldset.append('span').text('port');
+        fieldset.append('span').text(' port ');
         var inputFromPort = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'port')
@@ -39,7 +39,7 @@ var SendInfo = new function() {
             .attr('placeholder', 'Target IP')
             .attr('class', 'input-text')
             .style('width', 100);
-        fieldset.append('span').text('port');
+        fieldset.append('span').text(' port ');
         var inputToPort = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'port')
@@ -53,7 +53,8 @@ var SendInfo = new function() {
             .attr('placeholder', 'Message')
             .attr('class', 'input-text');
             
-        fieldset.append('span').text('xTimes');
+        fieldset.append('br');
+        fieldset.append('span').text('xTimes   ');
         var inputXTimes = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'xTimes')
@@ -62,7 +63,7 @@ var SendInfo = new function() {
             .style('width', 50);
             
         fieldset.append('br');
-        fieldset.append('span').text('delay');
+        fieldset.append('span').text('delay    ');
         var inputTicksDelay = fieldset.append('input')
             .attr('type', 'text')
             .attr('placeholder', 'Ticks delay')
