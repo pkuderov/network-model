@@ -22,8 +22,8 @@ var VisInfo = new function() {
             }
         }
         else {
-            if (nodes.length <= 2) {
-                var fromHost = nodes.length >= 1 && nodes[0].obj instanceof Host ? nodes[0].obj : null;
+            if (nodes.length >= 1 && nodes.length <= 2 && nodes[0].obj instanceof Host) {
+                var fromHost = nodes[0].obj;
                 var toHost = nodes.length >= 2 && nodes[1].obj instanceof Host ? nodes[1].obj : null;                
                 SendInfo.showSendDetails(fromHost, toHost);
             }
