@@ -654,17 +654,18 @@ var SendInfo = new function() {
         if (this.fromHost) var dropdownFromHost = VisInfo.appendDropDown(fieldset, "Select source IP");
         if (this.toHost) var dropdownToHost = VisInfo.appendDropDown(fieldset, "Select target IP");
         var inputFromIp = fieldset.append("input").attr("type", "text").attr("placeholder", "Source IP").attr("class", "input-text").style("width", 100);
-        fieldset.append("span").text("port");
+        fieldset.append("span").text(" port ");
         var inputFromPort = fieldset.append("input").attr("type", "text").attr("placeholder", "port").attr("class", "input-text").attr("value", "8080").style("width", 40);
         var inputToIp = fieldset.append("input").attr("type", "text").attr("placeholder", "Target IP").attr("class", "input-text").style("width", 100);
-        fieldset.append("span").text("port");
+        fieldset.append("span").text(" port ");
         var inputToPort = fieldset.append("input").attr("type", "text").attr("placeholder", "port").attr("class", "input-text").attr("value", "8080").style("width", 40);
         fieldset.append("p");
         var inputMessage = fieldset.append("input").attr("type", "text").attr("placeholder", "Message").attr("class", "input-text");
-        fieldset.append("span").text("xTimes");
+        fieldset.append("br");
+        fieldset.append("span").text("xTimes   ");
         var inputXTimes = fieldset.append("input").attr("type", "text").attr("placeholder", "xTimes").attr("class", "input-text").attr("value", "1").style("width", 50);
         fieldset.append("br");
-        fieldset.append("span").text("delay");
+        fieldset.append("span").text("delay    ");
         var inputTicksDelay = fieldset.append("input").attr("type", "text").attr("placeholder", "Ticks delay").attr("class", "input-text").attr("value", "1").style("width", 50);
         fieldset.append("p");
         var btnSend = fieldset.append("input").attr("type", "button").attr("value", "Send message").on("click", this.hSend);
@@ -705,6 +706,8 @@ var SendInfo = new function() {
             return d.str;
         }).style("font-weight", function(d) {
             return d.obj instanceof NetIface ? "bold" : null;
+        }).style("background-color", function(d) {
+            return d.obj instanceof NetIface ? "whitesmoke" : null;
         });
         container.item.exit().remove();
         if (items.length == 0) VisInfo.setDisabledColor(container.pOutput, VisInfo.colorDisabled); else VisInfo.setDisabledColor(container.pOutput, null);
@@ -743,10 +746,11 @@ var SendInfo = new function() {
         valid = valid && null != xTimes;
         valid = valid && null != ticksDelay;
         if (valid) {
+            var fromHost = SendInfo.fromHost;
             for (var i = 0; i < xTimes; i++) {
                 var msDelay = i * ticksDelay;
                 Executor.addJob(function() {
-                    SendInfo.fromHost.protocolHandlers.UDP.send(fromIp, fromPort, toIp, toPort, message);
+                    Environment.sendTo(fromHost, fromIp, fromPort, toIp, toPort, message);
                 }, msDelay);
             }
         }

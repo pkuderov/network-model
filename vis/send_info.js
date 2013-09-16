@@ -109,7 +109,8 @@ var SendInfo = new function() {
             .on('mouseup', function(d) { SendInfo.hMouseUpOnIpItem(container, d); })
             .attr('class', 'dropdown-item')
             .text(function(d) { return d.str; })
-            .style('font-weight', function(d) { return (d.obj instanceof NetIface) ? 'bold' : null; });
+            .style('font-weight', function(d) { return (d.obj instanceof NetIface) ? 'bold' : null; })
+            .style('background-color', function (d) { return (d.obj instanceof NetIface) ? 'whitesmoke' : null; });
             
         container.item.exit().remove();
         
@@ -167,11 +168,12 @@ var SendInfo = new function() {
         valid = valid && (null != ticksDelay);
         
         if (valid) {
+            var fromHost = SendInfo.fromHost;
             for (var i = 0; i < xTimes; i++) {
                 var msDelay = i * ticksDelay;
                 Executor.addJob(
                     function() {
-                        SendInfo.fromHost.protocolHandlers.UDP.send(fromIp, fromPort, toIp, toPort, message);
+                        Environment.sendTo(fromHost, fromIp, fromPort, toIp, toPort, message);
                     },
                     msDelay
                 );
