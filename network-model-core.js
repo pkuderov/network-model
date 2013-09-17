@@ -262,11 +262,14 @@ var Queue = function(owner, queueName, size, autoShrink) {
     };
     this.compact = function(obj, comparer) {
         var j = 0;
+        var removed = [];
         for (var i = 0; i < this.count; i++) {
             var x = this.getItem(i);
             if (comparer.call(obj, x)) {
                 this.setItem(j, x);
                 j++;
+            } else {
+                removed.push(x);
             }
         }
         var compactSuccessed = j < this.count;
@@ -275,7 +278,7 @@ var Queue = function(owner, queueName, size, autoShrink) {
         }
         this.top = (this.bottom + j) % this.array.length;
         this.count = j;
-        return compactSuccessed;
+        return removed.length > 0 ? removed : null;
     };
     this.removeFrom = function(index) {
         var comparer = function(x) {
@@ -512,10 +515,13 @@ var Executor = new function() {
         });
     };
     this.runJobs = function() {
-        while (!this.jobs.isEmpty()) {
-            if (this.jobs.peek().runTick > this.currentTick) break;
-            var job = this.jobs.pop();
-            job.func();
+        var jobsToRun = this.jobs.compact(this, function(x) {
+            return x.runTick > this.currentTick;
+        });
+        if (jobsToRun) {
+            for (var i = 0; i < jobsToRun.length; i++) {
+                jobsToRun[i].func();
+            }
         }
     };
     this.prepareNextTickExectuion();
@@ -733,8 +739,9 @@ var NetIface = function(owner, lowerObject, mac) {
         this.addresses.splice(i, 1);
     };
     this.removeAllIp = function() {
+        var netIface = this;
         this.addresses.forEach(function(pair) {
-            NetIface.removeIp(pair.ip);
+            netIface.removeIp(pair.ip);
         });
     };
 };

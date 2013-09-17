@@ -152,7 +152,9 @@ var Visualizer = new function() {
         var r = this.radius;
         this.gVisibleContainer.selectAll(".message").remove();
         if (messages.length == 0) return;
-        this.gVisibleContainer.selectAll(".message").data(messages).enter().insert("circle").attr("class", "message").attr("r", 3).attr("fill", "red").each(function(d) {
+        this.gVisibleContainer.selectAll(".message").data(messages).enter().insert("circle").attr("class", "message").filter(function(d) {
+            return d.source != d.target;
+        }).attr("r", 3).attr("fill", "red").each(function(d) {
             var dx = d.target.x - d.source.x;
             var dy = d.target.y - d.source.y;
             var dist = Math.sqrt(dx * dx + dy * dy);
