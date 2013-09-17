@@ -215,6 +215,7 @@ var Visualizer = new function() {
         
         this.gVisibleContainer.selectAll('.message').data(messages).enter().insert('circle')
             .attr('class', 'message')
+            .filter(function(d) { return d.source != d.target; })
             .attr('r', 3)
             .attr('fill', 'red')
             .each(function(d) {
