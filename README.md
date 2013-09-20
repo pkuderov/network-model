@@ -2,7 +2,7 @@ network-model
 =============
 
 This project simulates (maybe partly emulates) tcp\ip network and visualizes it.
-It's consist of two vastly independent parts
+It's consist of two vastly independent parts:
  * network engine with tcp/ip protocols and some network devices simulation
  * graphic editor which allows to user to create/edit network graph, set it's components settings like ip-addresses, routings tables and send dynamically UDP datagrams between hosts. It visualizes messages flow (very simplified) between network graph nodes and write to console log what's going on behind the scene (log shows a path of packets in details, it's inner structure, detailed error messages and etc.)
 
