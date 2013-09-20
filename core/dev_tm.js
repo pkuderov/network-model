@@ -60,7 +60,7 @@ var TransMediumDirection = function(owner, fromPort, toPort) {
         return this.busy && (Executor.currentTick - this.transferStartTick) >= (this.owner.ticksToTransfer + this.ticksToFlushPortsBuffer);
     }
     this.randomDropFrame = function() {
-        if (Math.random() < 0.01) {
+        if (Math.random() < 0.0025) {
             logf(this, "frame damaged during transfer: %s", this.frame.toString());
             return true;
         }

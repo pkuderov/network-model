@@ -43,16 +43,30 @@ new function() {
     });
 }();
 
+var maxLogMessageLength = 200 - 50;
+
 var log = function() {
     console.log(sprintf.apply(this, arguments));
 };
 
 var slogf = function() {
-    return sprintf("[%'05d]|  %-40s|  %s", Executor.currentTick, arguments[0].getObjectName(), sprintf.apply(this, Array.prototype.slice.call(arguments, 1)));
+    var message = sprintf.apply(this, Array.prototype.slice.call(arguments, 1));
+    var cnt = Math.max(1, Math.floor((message.length - 1) / maxLogMessageLength) + 1);
+    var result = [];
+    for (var i = 0; i < cnt; i++) {
+        if (i == 0) {
+            result.push(sprintf("%s|  %-38s|  %s", Executor.getCurrentTickAsString(), arguments[0].getObjectName(), message.substring(i * maxLogMessageLength, (i + 1) * maxLogMessageLength)));
+        } else result.push(sprintf("  ...%-42s|  %s", "", message.substring(i * maxLogMessageLength, (i + 1) * maxLogMessageLength)));
+    }
+    return result;
 };
 
 var logf = function() {
-    console.log(slogf.apply(this, arguments));
+    var messages = slogf.apply(this, arguments);
+    console.log("");
+    for (var i = 0; i < messages.length; i++) {
+        console.log(messages[i]);
+    }
 };
 
 var alert = window.alert;
@@ -506,7 +520,7 @@ var Executor = new function() {
         this.indexToCall = 0;
         this.activeObjects = Environment.getActiveElementaryObjects();
         this.currentTick++;
-        if (this.currentTick % Math.floor(5e3 / this.pauseBetweenTicksInMs) == 0) log("vtime:      %s", this.currentTick);
+        if (this.currentTick % Math.floor(5e3 / this.pauseBetweenTicksInMs) == 0) log(this.getCurrentTickAsString());
     };
     this.addJob = function(func, runTickDelay) {
         this.jobs.push({
@@ -523,6 +537,9 @@ var Executor = new function() {
                 jobsToRun[i].func();
             }
         }
+    };
+    this.getCurrentTickAsString = function() {
+        return sprintf("[%'04d]", this.currentTick);
     };
     this.prepareNextTickExectuion();
 }();
@@ -573,7 +590,7 @@ var TransMediumDirection = function(owner, fromPort, toPort) {
         return this.busy && Executor.currentTick - this.transferStartTick >= this.owner.ticksToTransfer + this.ticksToFlushPortsBuffer;
     };
     this.randomDropFrame = function() {
-        if (Math.random() < .01) {
+        if (Math.random() < .0025) {
             logf(this, "frame damaged during transfer: %s", this.frame.toString());
             return true;
         }
@@ -1083,9 +1100,9 @@ var IPv4Handler = function(owner) {
     };
     this.forward = function(fromNetIface, packet, isBroadcastEthernetFrame) {
         if (isBroadcastEthernetFrame) {
-            logf(this, "packet received as broadcast from channel level => packet isn't forwarded, i.e. packet dropped: %s", packet.toString());
+            logf(this, "packet received as broadcast from channel level => packet won't be forwarded, i.e. packet dropped: %s", packet.toString());
         } else if (IPv4.isZeroNetworkForNetIface(fromNetIface, packet.srcIp)) {
-            logf(this, "packet has network prefix = 0 for netIface received it => packet isn't forwarded, i.e. packet dropped: %s", packet.toString());
+            logf(this, "packet has network prefix = 0 for netIface received it => packet won't be forwarded, i.e. packet dropped: %s", packet.toString());
         } else {
             if (packet.getSize() <= IPv4.maxTransmissionUnit) this.toSend.push({
                 packet: packet
@@ -1199,6 +1216,7 @@ var IPv4Handler = function(owner) {
         var arr = this.receivedFragmentedPackets[key].fragments;
         while (arr[offset]) {
             if (!arr[offset].moreFragments) {
+                logf(this, "datagram with key %s assembled successfully", key);
                 return this.assembleDatagram(key);
             }
             offset += arr[offset].fragmentLength;

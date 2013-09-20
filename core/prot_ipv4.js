@@ -161,10 +161,10 @@ var IPv4Handler = function(owner) {
     }
     this.forward = function(fromNetIface, packet, isBroadcastEthernetFrame) {
         if (isBroadcastEthernetFrame) {
-            logf(this, "packet received as broadcast from channel level => packet isn't forwarded, i.e. packet dropped: %s", packet.toString());
+            logf(this, "packet received as broadcast from channel level => packet won't be forwarded, i.e. packet dropped: %s", packet.toString());
         }
         else if (IPv4.isZeroNetworkForNetIface(fromNetIface, packet.srcIp)) {
-            logf(this, "packet has network prefix = 0 for netIface received it => packet isn't forwarded, i.e. packet dropped: %s", packet.toString());
+            logf(this, "packet has network prefix = 0 for netIface received it => packet won't be forwarded, i.e. packet dropped: %s", packet.toString());
         }
         else {
             //send
@@ -320,6 +320,7 @@ var IPv4Handler = function(owner) {
         var arr = this.receivedFragmentedPackets[key].fragments;
         while (arr[offset]) {
             if (!arr[offset].moreFragments) {
+                logf(this, "datagram with key %s assembled successfully", key);
                 return this.assembleDatagram(key);
             }
             offset += arr[offset].fragmentLength;

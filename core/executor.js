@@ -71,7 +71,7 @@ var Executor = new function() {
         
         this.currentTick ++;
         if ((this.currentTick % Math.floor(5000 / this.pauseBetweenTicksInMs)) == 0)
-            log('vtime:      %s', this.currentTick);
+            log(this.getCurrentTickAsString());
     }
     this.addJob = function(func, runTickDelay) {
         this.jobs.push({ func: func, runTick: (this.currentTick + runTickDelay) });
@@ -83,6 +83,9 @@ var Executor = new function() {
                 jobsToRun[i].func();
             }
         }
+    }
+    this.getCurrentTickAsString = function() {
+        return sprintf("[%'04d]", this.currentTick);
     }
     
     //initialization

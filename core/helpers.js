@@ -86,14 +86,32 @@ new function () {
     });
 };
 
+var maxLogMessageLength = 200 - 50;
+
 var log = function() {
     console.log(sprintf.apply(this, arguments));
 }
 var slogf = function() {
-    return sprintf("[%'05d]|  %-40s|  %s", Executor.currentTick, arguments[0].getObjectName(), sprintf.apply(this, Array.prototype.slice.call(arguments, 1)));
+    var message = sprintf.apply(this, Array.prototype.slice.call(arguments, 1));
+    var cnt = Math.max(1, Math.floor((message.length - 1) / maxLogMessageLength) + 1);
+    var result = [];
+    for (var i = 0; i < cnt; i++) {
+        if (i == 0) {
+            result.push(sprintf("%s|  %-38s|  %s", Executor.getCurrentTickAsString(), arguments[0].getObjectName(), 
+                message.substring(i * maxLogMessageLength, (i + 1) * maxLogMessageLength)
+            ));
+        }
+        else
+            result.push(sprintf("  ...%-42s|  %s", "", message.substring(i * maxLogMessageLength, (i + 1) * maxLogMessageLength)));
+    }
+    return result;
 }
 var logf = function() {
-    console.log(slogf.apply(this, arguments));
+    var messages = slogf.apply(this, arguments);
+    console.log("");
+    for (var i = 0; i < messages.length; i++) {
+        console.log(messages[i]);
+    }
 }
 var alert = window.alert;
 var assert = console.assert;
@@ -107,6 +125,7 @@ var assertf = function() {
         console.assert(false, slogf.apply(this, Array.prototype.slice.call(arguments, 1)));
     }
 }
+
 
 function objToString (obj, maxDepth) {
     if (maxDepth <= 0)
