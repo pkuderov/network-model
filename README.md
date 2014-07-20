@@ -11,3 +11,21 @@ This javascript was built with great help of following external libraries:
  * [d3.js] (http://d3js.org/) - the power of this library was very helpful for creating network graph visualisation. Also it was used as jquery analogue to create dynamic behavior of graphic editor at all.
 
 To try it online, go to [this page](http://pkuderov.github.io/network-model/vis_main.html).
+To create network:
+  * choose node type by clicking on one of the upper buttons (host=pc, switch, router)
+  * **shift + click on clear plane** - create node
+  * **click on node** - select node
+  * **ctrl + click on node** - add or remove node from current selection
+  * **ctrl + click and press on plane** - choose selection area
+  * **shift + click on clear plane + having selected group of nodes** - create node linked to that group
+  * **shift + click on node + having selected group of nodes** - link that node with the group
+  * **'r' + selected group of nodes** - remove group of nodes (or single node)
+  * add IP and routes for selected single node
+  * create subnet and create routes for selected group
+
+'freeze' button will change state and allow to send messages from one host to another:
+  * select one node and choose from which its IP and to which IP to send a message
+  * or select 2 nodes and first selected node will be sender and 2nd will be the receiver
+  * **click 'send'** - send message
+  * **click 'play'** - start emulation
+  * you can open browser javascript console to look at detail message delivery
