@@ -9,3 +9,5 @@ It's consist of two vastly independent parts:
 This javascript was built with great help of following external libraries:
  * [sprintf.js](https://code.google.com/p/sprintf/) - it was very useful for formatting log information
  * [d3.js] (http://d3js.org/) - the power of this library was very helpful for creating network graph visualisation. Also it was used as jquery analogue to create dynamic behavior of graphic editor at all.
+
+To try it online, go to [this page](http://pkuderov.github.io/network-model/vis_main.html).
