@@ -29,3 +29,5 @@ To create network:
   * **click 'send'** - send message
   * **click 'play'** - start emulation
   * you can open browser javascript console to look at detail message delivery
+
+There's a simple test example - type Visualizer.test2() in console than 'freeze' -> 'play' to see it in action.
